@@ -1,0 +1,1595 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VoltAI Studio Pro | محاكي الكلاسيك كنترول والـ PLC والأردوينو الشامل</title>
+    <style>
+        :root {
+            --bg-canvas: #0b0d10;
+            --grid-dot: #232933;
+            --panel-bg: #12161d;
+            --panel-border: #242b36;
+            --accent: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-amber: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: var(--bg-canvas);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Toolbar */
+        .top-bar {
+            height: 52px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            gap: 6px;
+            z-index: 100;
+            overflow-x: auto;
+        }
+
+        .brand-group { display: flex; align-items: center; gap: 8px; }
+
+        .back-voltai-btn {
+            background: rgba(59, 130, 246, 0.14);
+            border: 1px solid rgba(59, 130, 246, 0.45);
+            color: #60a5fa;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .sim-controls { display: flex; align-items: center; gap: 6px; }
+
+        .t-btn {
+            background: #1b212c;
+            border: 1px solid #2e3746;
+            color: var(--text-main);
+            height: 35px;
+            padding: 0 10px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .t-btn:hover { border-color: var(--accent-blue); }
+        .t-btn.run-active { background: var(--accent); color: #042f2e; border-color: var(--accent); }
+        .t-btn.ai-magic {
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            border: none;
+            color: #fff;
+            box-shadow: 0 0 14px rgba(124, 58, 237, 0.4);
+        }
+
+        /* Main Studio Body */
+        .studio-body {
+            flex: 1;
+            display: flex;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Categorized Component Sidebar */
+        .comp-sidebar {
+            width: 285px;
+            background: rgba(18, 22, 29, 0.98);
+            border-left: 1px solid var(--panel-border);
+            display: flex;
+            flex-direction: column;
+            z-index: 80;
+            transition: transform 0.25s ease;
+        }
+        .comp-sidebar.collapsed {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            transform: translateX(100%);
+        }
+
+        .search-wrap {
+            padding: 9px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+        .search-wrap input {
+            width: 100%;
+            background: #0b0d10;
+            border: 1px solid #2e3746;
+            color: #fff;
+            padding: 8px 11px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            outline: none;
+        }
+        .search-wrap input:focus { border-color: var(--accent); }
+
+        .cat-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px;
+        }
+
+        .cat-group { margin-bottom: 6px; }
+        .cat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 10px;
+            background: #171c26;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            color: #e5e7eb;
+            cursor: pointer;
+            user-select: none;
+        }
+        .cat-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 6px;
+        }
+        .cat-items {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 5px 2px;
+        }
+        .cat-items.closed { display: none; }
+
+        .palette-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 6px 8px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+            border: 1px solid transparent;
+            cursor: pointer;
+            font-size: 0.78rem;
+            color: #d1d5db;
+            transition: all 0.15s;
+        }
+        .palette-item:hover {
+            background: rgba(16, 185, 129, 0.12);
+            border-color: rgba(16, 185, 129, 0.45);
+            color: #fff;
+        }
+        .palette-thumb {
+            width: 30px;
+            height: 30px;
+            background: #0b0d10;
+            border: 1px solid #2e3746;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.85rem;
+        }
+
+        /* Dot-Grid Canvas */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            background-color: var(--bg-canvas);
+            background-image: radial-gradient(var(--grid-dot) 1.3px, transparent 1.3px);
+            background-size: 22px 22px;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #wiresSvg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 30;
+        }
+
+        .wire-stroke {
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            pointer-events: stroke;
+            cursor: pointer;
+            transition: stroke-width 0.15s;
+        }
+        .wire-stroke:hover { stroke-width: 6 !important; }
+
+        @keyframes currentFlow { to { stroke-dashoffset: -20; } }
+        .wire-energized {
+            stroke-dasharray: 7 3;
+            animation: currentFlow 0.45s linear infinite;
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+
+        @keyframes faultBlink {
+            0%, 100% { stroke: #ef4444; stroke-width: 5; }
+            50% { stroke: #fde047; stroke-width: 7; }
+        }
+        .wire-shorted { animation: faultBlink 0.35s infinite; }
+
+        /* Placed Industrial Components */
+        .sim-node {
+            position: absolute;
+            z-index: 20;
+            user-select: none;
+            touch-action: none;
+        }
+        .node-body {
+            position: relative;
+            background: #161b24;
+            border: 1.5px solid #334155;
+            border-radius: 8px;
+            padding: 14px 10px;
+            min-width: 108px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.65);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .node-tag {
+            font-size: 0.64rem;
+            font-weight: 800;
+            color: #94a3b8;
+            margin-bottom: 4px;
+            letter-spacing: 0.2px;
+            text-align: center;
+        }
+        .node-del {
+            position: absolute;
+            top: 2px;
+            left: 5px;
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 0.72rem;
+            cursor: pointer;
+        }
+        .node-del:hover { color: var(--danger); }
+
+        /* Screw Terminals */
+        .term-port {
+            position: absolute;
+            width: 13px;
+            height: 13px;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            background: #0f172a;
+            border: 2px solid #94a3b8;
+            cursor: crosshair;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .term-port::after {
+            content: '';
+            width: 5px;
+            height: 1.5px;
+            background: #cbd5e1;
+            transform: rotate(-35deg);
+        }
+        .term-port:hover, .term-port.active-pin {
+            border-color: #f59e0b;
+            background: #f59e0b;
+            transform: translate(-50%, -50%) scale(1.38);
+        }
+        .term-lbl {
+            position: absolute;
+            font-size: 0.54rem;
+            font-weight: 800;
+            color: #94a3b8;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* Interactive Pushbuttons & Switches */
+        .push-actuator {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 3px solid #1e293b;
+            cursor: pointer;
+            margin: 3px 0;
+            transition: transform 0.08s;
+        }
+        .push-actuator:active { transform: scale(0.88); }
+
+        .toggle-pill {
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: #38bdf8;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 3px;
+        }
+
+        @keyframes spinRotor {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .rotor-spinning {
+            transform-origin: center;
+            animation: spinRotor 0.5s linear infinite;
+        }
+
+        /* Floating Wire Color Picker */
+        .floating-wire-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(18, 22, 29, 0.92);
+            border: 1px solid var(--panel-border);
+            padding: 6px 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 70;
+            backdrop-filter: blur(8px);
+        }
+        .w-color-dot {
+            width: 17px;
+            height: 17px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+        .w-color-dot.active { border-color: #fff; transform: scale(1.15); }
+
+        /* Fault Banner */
+        .fault-toast {
+            position: absolute;
+            top: 52px;
+            left: 10px;
+            max-width: 380px;
+            background: rgba(127, 29, 29, 0.96);
+            border: 1px solid #ef4444;
+            color: #fecaca;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.79rem;
+            line-height: 1.5;
+            z-index: 90;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.65);
+        }
+
+        /* Bottom Dock Tabs */
+        .bottom-dock {
+            position: absolute;
+            bottom: 48px;
+            left: 12px;
+            right: 296px;
+            height: 275px;
+            background: rgba(18, 22, 29, 0.97);
+            border: 1px solid var(--panel-border);
+            border-radius: 14px;
+            z-index: 85;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.7);
+            overflow: hidden;
+        }
+        .bottom-dock.open { display: flex; }
+        @media (max-width: 820px) {
+            .bottom-dock { right: 12px; height: 315px; }
+        }
+
+        .dock-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            background: #171c26;
+            border-bottom: 1px solid var(--panel-border);
+            font-size: 0.83rem;
+            font-weight: 800;
+        }
+        .dock-content {
+            flex: 1;
+            padding: 12px;
+            overflow-y: auto;
+            font-size: 0.83rem;
+        }
+
+        /* Bottom Bar */
+        .bottom-bar {
+            height: 44px;
+            background: var(--panel-bg);
+            border-top: 1px solid var(--panel-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            gap: 6px;
+            overflow-x: auto;
+            z-index: 95;
+        }
+        .dock-trigger {
+            background: #1b212c;
+            border: 1px solid #2e3746;
+            color: #d1d5db;
+            padding: 5px 11px;
+            border-radius: 7px;
+            font-size: 0.77rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dock-trigger.active {
+            background: rgba(16, 185, 129, 0.16);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Ladder Rung */
+        .ladder-rung {
+            background: #0b0d10;
+            border: 1px solid #242b36;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            font-family: monospace;
+            direction: ltr;
+            text-align: left;
+            font-size: 0.79rem;
+        }
+        .rung-live {
+            border-color: #10b981;
+            box-shadow: inset 3px 0 0 #10b981;
+        }
+        .rung-title { color: #9ca3af; font-size: 0.72rem; margin-bottom: 4px; }
+        .rung-wire { color: #64748b; font-weight: bold; }
+        .rung-live .rung-wire { color: #10b981; }
+    </style>
+</head>
+<body>
+
+    <!-- Top Bar -->
+    <header class="top-bar">
+        <div class="brand-group">
+            <button class="t-btn" onclick="toggleSidebar()" title="إظهار/إخفاء العناصر">☰ العناصر (77)</button>
+            <a href="index.html" class="back-voltai-btn">⚡ VoltAI Pro</a>
+        </div>
+
+        <div class="sim-controls">
+            <button class="t-btn" id="btnRunSim" onclick="toggleSimulation()">▶ تشغيل</button>
+            <button class="t-btn" onclick="stopSimulation()">⏹ إيقاف</button>
+            <button class="t-btn" onclick="runFaultDiagnostics()">🩺 كاشف الأعطال</button>
+            <button class="t-btn ai-magic" onclick="openDock('ai')">✨ الذكاء الاصطناعي (ابنِ دائرة)</button>
+            <button class="t-btn" onclick="clearWorkspace()" title="مسح اللوحة">🗑️</button>
+        </div>
+    </header>
+
+    <div class="studio-body">
+        <!-- Categorized 77-Item Sidebar -->
+        <aside class="comp-sidebar" id="compSidebar">
+            <div class="search-wrap">
+                <input type="text" id="compSearch" placeholder="🔍 ابحث (ستار دلتا، ثرمستور، أردوينو، PLC، حساس...)" onkeyup="filterPalette()">
+            </div>
+            <div class="cat-scroll" id="paletteContainer"></div>
+        </aside>
+
+        <!-- Main Dot-Grid Workspace -->
+        <main class="canvas-area" id="canvasArea" onclick="cancelWiring()">
+            <svg id="wiresSvg"></svg>
+
+            <!-- Wire Color Selector -->
+            <div class="floating-wire-bar" onclick="event.stopPropagation()">
+                <span style="font-size:0.72rem;color:#9ca3af;font-weight:700;">لون السلك:</span>
+                <div class="w-color-dot active" style="background:#ef4444;" title="L1 / حار" onclick="setWireColor('#ef4444', this)"></div>
+                <div class="w-color-dot" style="background:#eab308;" title="L2" onclick="setWireColor('#eab308', this)"></div>
+                <div class="w-color-dot" style="background:#3b82f6;" title="L3 / +24V" onclick="setWireColor('#3b82f6', this)"></div>
+                <div class="w-color-dot" style="background:#38bdf8;" title="Neutral / 0V" onclick="setWireColor('#38bdf8', this)"></div>
+                <div class="w-color-dot" style="background:#10b981;" title="Earth / PE" onclick="setWireColor('#10b981', this)"></div>
+                <span id="wiringHint" style="font-size:0.72rem;color:#f59e0b;margin-right:6px;"></span>
+            </div>
+
+            <!-- Live Fault Detector Alert -->
+            <div class="fault-toast" id="faultToast" onclick="event.stopPropagation()"></div>
+
+            <!-- Bottom Dock (AI Auto-Builder / Process Tank & Sewage / PLC Ladder / Arduino IDE) -->
+            <div class="bottom-dock" id="bottomDock" onclick="event.stopPropagation()">
+                <div class="dock-header">
+                    <span id="dockTitle">المساعد الهندسي الذكي</span>
+                    <button onclick="closeDock()" style="background:none;border:none;color:#9ca3af;font-size:1rem;cursor:pointer;">✕</button>
+                </div>
+                <div class="dock-content" id="dockBody"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bottom Mode Bar -->
+    <footer class="bottom-bar">
+        <div style="display:flex;gap:6px;">
+            <button class="dock-trigger" id="trig-ai" onclick="openDock('ai')">✨ الذكاء الاصطناعي (توليد الدوائر)</button>
+            <button class="dock-trigger" id="trig-process" onclick="openDock('process')">💧 خزان المياه ومحطة الصرف</button>
+            <button class="dock-trigger" id="trig-plc" onclick="openDock('plc')">📟 محرر PLC Ladder</button>
+            <button class="dock-trigger" id="trig-arduino" onclick="openDock('arduino')">🤖 برمجة الأردوينو (C++)</button>
+        </div>
+        <div id="simStatusText" style="font-size:0.75rem;color:#9ca3af;white-space:nowrap;">
+            77 عنصر صناعي وإلكتروني جاهز | اضغط على طرف ثم طرف آخر للتوصيل
+        </div>
+    </footer>
+
+    <script>
+        /* =========================================================
+           1. COMPLETE 77-ITEM CATALOG (ALL SCREENSHOTS + ARDUINO)
+           ========================================================= */
+        const CATEGORIES = [
+            {
+                name: 'التوزيع والحماية',
+                color: '#ef4444',
+                items: [
+                    { type: 'SUPPLY_3P', label: 'مصدر 3 فاز + N (400V)', ports: [{ id: 'L1', x: 20, y: 82 }, { id: 'L2', x: 45, y: 82 }, { id: 'L3', x: 70, y: 82 }, { id: 'N', x: 95, y: 82 }], render: () => `<svg width="96" height="50" viewBox="0 0 96 50"><rect x="4" y="4" width="88" height="40" rx="5" fill="#0f172a" stroke="#ef4444" stroke-width="1.8"/><text x="48" y="22" fill="#f8fafc" font-size="10" font-weight="bold" text-anchor="middle">3~ 400V + N</text><text x="15" y="39" fill="#ef4444" font-size="8">L1</text><text x="38" y="39" fill="#eab308" font-size="8">L2</text><text x="61" y="39" fill="#3b82f6" font-size="8">L3</text><text x="82" y="39" fill="#38bdf8" font-size="8">N</text></svg>` },
+                    { type: 'DIST_1P_13', label: 'كتلة توزيع 1P (13 فتحة)', ports: [{ id: 'IN', x: 35, y: 6 }, { id: 'OUT1', x: 35, y: 92 }, { id: 'OUT2', x: 78, y: 92 }], render: () => `<svg width="78" height="54" viewBox="0 0 78 54"><rect x="8" y="6" width="62" height="42" rx="4" fill="#1e293b" stroke="#94a3b8" stroke-width="1.6"/><text x="39" y="30" fill="#facc15" font-size="9" font-weight="bold" text-anchor="middle">1P 13-Hole</text></svg>` },
+                    { type: 'DIST_4P_28', label: 'كتلة توزيع 4P (L1 L2 L3 N - 28 فتحة)', ports: [{ id: 'L1', x: 20, y: 6 }, { id: 'L2', x: 45, y: 6 }, { id: 'L3', x: 70, y: 6 }, { id: 'N', x: 95, y: 6 }, { id: 'O1', x: 20, y: 92 }, { id: 'O2', x: 45, y: 92 }, { id: 'O3', x: 70, y: 92 }, { id: 'ON', x: 95, y: 92 }], render: () => `<svg width="96" height="54" viewBox="0 0 96 54"><rect x="4" y="6" width="88" height="42" rx="4" fill="#1e293b" stroke="#64748b" stroke-width="1.6"/><line x1="8" y1="18" x2="88" y2="18" stroke="#ef4444" stroke-width="2"/><line x1="8" y1="26" x2="88" y2="26" stroke="#eab308" stroke-width="2"/><line x1="8" y1="34" x2="88" y2="34" stroke="#3b82f6" stroke-width="2"/><line x1="8" y1="42" x2="88" y2="42" stroke="#38bdf8" stroke-width="2"/></svg>` },
+                    { type: 'DIST_4P_48', label: 'كتلة توزيع 4P (48 فتحة)', ports: [{ id: 'L1', x: 20, y: 6 }, { id: 'L2', x: 45, y: 6 }, { id: 'L3', x: 70, y: 6 }, { id: 'N', x: 95, y: 6 }, { id: 'O1', x: 20, y: 92 }, { id: 'O2', x: 45, y: 92 }, { id: 'O3', x: 70, y: 92 }, { id: 'ON', x: 95, y: 92 }], render: () => `<svg width="96" height="54" viewBox="0 0 96 54"><rect x="4" y="6" width="88" height="42" rx="4" fill="#0f172a" stroke="#f59e0b" stroke-width="1.6"/><text x="48" y="31" fill="#f8fafc" font-size="9" font-weight="bold" text-anchor="middle">4P 48-Hole</text></svg>` },
+                    { type: 'BUS_H_6', label: 'قضيب توصيل N / PE أفقي (6)', ports: [{ id: '1', x: 25, y: 45 }, { id: '2', x: 56, y: 45 }, { id: '3', x: 87, y: 45 }], render: () => `<svg width="86" height="28" viewBox="0 0 86 28"><rect x="4" y="8" width="78" height="12" rx="2" fill="#0284c7" stroke="#38bdf8"/><text x="43" y="17" fill="#fff" font-size="8" text-anchor="middle">N/PE H-6</text></svg>` },
+                    { type: 'BUS_H_12', label: 'قضيب توصيل N / PE أفقي (12)', ports: [{ id: '1', x: 20, y: 45 }, { id: '2', x: 56, y: 45 }, { id: '3', x: 92, y: 45 }], render: () => `<svg width="94" height="28" viewBox="0 0 94 28"><rect x="4" y="8" width="86" height="12" rx="2" fill="#0284c7" stroke="#38bdf8"/><text x="47" y="17" fill="#fff" font-size="8" text-anchor="middle">N/PE H-12</text></svg>` },
+                    { type: 'BUS_H_18', label: 'قضيب توصيل N / PE أفقي (18)', ports: [{ id: '1', x: 20, y: 45 }, { id: '2', x: 56, y: 45 }, { id: '3', x: 92, y: 45 }], render: () => `<svg width="98" height="28" viewBox="0 0 98 28"><rect x="4" y="8" width="90" height="12" rx="2" fill="#15803d" stroke="#4ade80"/><text x="49" y="17" fill="#fff" font-size="8" text-anchor="middle">PE H-18</text></svg>` },
+                    { type: 'BUS_V_6', label: 'قضيب توصيل N / PE عمودي (6)', ports: [{ id: '1', x: 56, y: 12 }, { id: '2', x: 56, y: 88 }], render: () => `<svg width="34" height="62" viewBox="0 0 34 62"><rect x="10" y="4" width="14" height="54" rx="2" fill="#0284c7" stroke="#38bdf8"/></svg>` },
+                    { type: 'BUS_V_12', label: 'قضيب توصيل N / PE عمودي (12)', ports: [{ id: '1', x: 56, y: 12 }, { id: '2', x: 56, y: 88 }], render: () => `<svg width="34" height="66" viewBox="0 0 34 66"><rect x="10" y="4" width="14" height="58" rx="2" fill="#15803d" stroke="#4ade80"/></svg>` },
+                    { type: 'BUS_V_18', label: 'قضيب توصيل N / PE عمودي (18)', ports: [{ id: '1', x: 56, y: 12 }, { id: '2', x: 56, y: 88 }], render: () => `<svg width="34" height="70" viewBox="0 0 34 70"><rect x="10" y="4" width="14" height="62" rx="2" fill="#ca8a04" stroke="#facc15"/></svg>` },
+                    { type: 'SOCKET_16A', label: 'مقبس 16A (شوكو)', ports: [{ id: 'L', x: 35, y: 6 }, { id: 'N', x: 78, y: 6 }], render: () => `<svg width="58" height="58" viewBox="0 0 58 58"><rect x="8" y="6" width="42" height="46" rx="5" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/><circle cx="29" cy="29" r="13" fill="#cbd5e1" stroke="#475569"/><circle cx="24" cy="29" r="2.2" fill="#0f172a"/><circle cx="34" cy="29" r="2.2" fill="#0f172a"/></svg>` },
+                    { type: 'MCB_3P', label: 'قاطع رئيسي 3P + N', ports: [{ id: '1', x: 20, y: 6 }, { id: '3', x: 45, y: 6 }, { id: '5', x: 70, y: 6 }, { id: 'N1', x: 95, y: 6 }, { id: '2', x: 20, y: 94 }, { id: '4', x: 45, y: 94 }, { id: '6', x: 70, y: 94 }, { id: 'N2', x: 95, y: 94 }], render: (n) => `<svg width="96" height="58" viewBox="0 0 96 58"><rect x="4" y="6" width="88" height="46" rx="5" fill="#1e293b" stroke="${n.tripped ? '#ef4444' : '#64748b'}" stroke-width="2"/><rect x="14" y="22" width="68" height="14" rx="3" fill="${n.tripped ? '#ef4444' : '#10b981'}"/><text x="48" y="32" fill="#042f2e" font-size="9" font-weight="bold" text-anchor="middle">${n.tripped ? 'TRIPPED' : 'ON (I)'}</text></svg>` },
+                    { type: 'MCB_1P', label: 'قاطع تحكم 1P (10A)', ports: [{ id: '1', x: 56, y: 6 }, { id: '2', x: 56, y: 94 }], render: (n) => `<svg width="58" height="58" viewBox="0 0 58 58"><rect x="10" y="6" width="38" height="46" rx="5" fill="#1e293b" stroke="#64748b" stroke-width="2"/><rect x="18" y="22" width="22" height="14" rx="2" fill="${n.tripped ? '#ef4444' : '#f97316'}"/><text x="29" y="32" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">${n.tripped ? 'OFF' : 'ON'}</text></svg>` },
+                    { type: 'MPCB', label: 'قاطع حماية المحرك (MPCB)', ports: [{ id: '1', x: 25, y: 6 }, { id: '3', x: 56, y: 6 }, { id: '5', x: 87, y: 6 }, { id: '2', x: 25, y: 94 }, { id: '4', x: 56, y: 94 }, { id: '6', x: 87, y: 94 }], render: (n) => `<svg width="82" height="58" viewBox="0 0 82 58"><rect x="6" y="6" width="70" height="46" rx="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1.8"/><circle cx="41" cy="29" r="12" fill="#0f172a" stroke="#94a3b8"/><line x1="34" y1="24" x2="48" y2="34" stroke="${n.tripped ? '#ef4444' : '#10b981'}" stroke-width="3"/></svg>` }
+                ]
+            },
+            {
+                name: 'الكونتاكتورات والملامسات',
+                color: '#3b82f6',
+                items: [
+                    { type: 'KM_3P_12A', label: 'كونتاكتور 3P (6 - 12 A)', ports: [{ id: 'L1', x: 18, y: 6 }, { id: 'L2', x: 40, y: 6 }, { id: 'L3', x: 62, y: 6 }, { id: '13', x: 82, y: 6 }, { id: 'A1', x: 100, y: 6 }, { id: 'T1', x: 18, y: 96 }, { id: 'T2', x: 40, y: 96 }, { id: 'T3', x: 62, y: 96 }, { id: '14', x: 82, y: 96 }, { id: 'A2', x: 100, y: 96 }], render: (n) => `<svg width="102" height="60" viewBox="0 0 102 60"><rect x="4" y="6" width="94" height="48" rx="5" fill="#1e293b" stroke="${n.energized ? '#10b981' : '#475569'}" stroke-width="2"/><rect x="30" y="20" width="42" height="18" rx="3" fill="${n.energized ? '#10b981' : '#0f172a'}"/><text x="51" y="32" fill="${n.energized ? '#042f2e' : '#94a3b8'}" font-size="8" font-weight="bold" text-anchor="middle">KM 12A</text></svg>` },
+                    { type: 'KM_3P_38A', label: 'كونتاكتور 3P (9 - 38 A)', ports: [{ id: 'L1', x: 18, y: 6 }, { id: 'L2', x: 40, y: 6 }, { id: 'L3', x: 62, y: 6 }, { id: '13', x: 82, y: 6 }, { id: 'A1', x: 100, y: 6 }, { id: 'T1', x: 18, y: 96 }, { id: 'T2', x: 40, y: 96 }, { id: 'T3', x: 62, y: 96 }, { id: '14', x: 82, y: 96 }, { id: 'A2', x: 100, y: 96 }], render: (n) => `<svg width="102" height="60" viewBox="0 0 102 60"><rect x="4" y="6" width="94" height="48" rx="5" fill="#1e293b" stroke="${n.energized ? '#10b981' : '#3b82f6'}" stroke-width="2"/><rect x="30" y="20" width="42" height="18" rx="3" fill="${n.energized ? '#10b981' : '#0f172a'}"/><text x="51" y="32" fill="${n.energized ? '#042f2e' : '#60a5fa'}" font-size="8" font-weight="bold" text-anchor="middle">KM 38A</text></svg>` },
+                    { type: 'KM_3P_95A', label: 'كونتاكتور 3P (40 - 95 A)', ports: [{ id: 'L1', x: 18, y: 6 }, { id: 'L2', x: 40, y: 6 }, { id: 'L3', x: 62, y: 6 }, { id: '13', x: 82, y: 6 }, { id: 'A1', x: 100, y: 6 }, { id: 'T1', x: 18, y: 96 }, { id: 'T2', x: 40, y: 96 }, { id: 'T3', x: 62, y: 96 }, { id: '14', x: 82, y: 96 }, { id: 'A2', x: 100, y: 96 }], render: (n) => `<svg width="102" height="60" viewBox="0 0 102 60"><rect x="4" y="6" width="94" height="48" rx="5" fill="#0f172a" stroke="${n.energized ? '#10b981' : '#f59e0b'}" stroke-width="2"/><rect x="30" y="20" width="42" height="18" rx="3" fill="${n.energized ? '#10b981' : '#1e293b'}"/><text x="51" y="32" fill="${n.energized ? '#042f2e' : '#fbbf24'}" font-size="8" font-weight="bold" text-anchor="middle">KM 95A</text></svg>` },
+                    { type: 'KM_4P_40A', label: 'كونتاكتور 4P (20 - 40 A)', ports: [{ id: '1', x: 20, y: 6 }, { id: '3', x: 45, y: 6 }, { id: '5', x: 70, y: 6 }, { id: '7', x: 95, y: 6 }, { id: '2', x: 20, y: 96 }, { id: '4', x: 45, y: 96 }, { id: '6', x: 70, y: 96 }, { id: '8', x: 95, y: 96 }], render: (n) => `<svg width="96" height="60" viewBox="0 0 96 60"><rect x="4" y="6" width="88" height="48" rx="5" fill="#1e293b" stroke="${n.energized ? '#10b981' : '#64748b'}" stroke-width="2"/><text x="48" y="33" fill="#e2e8f0" font-size="9" font-weight="bold" text-anchor="middle">4P 40A</text></svg>` },
+                    { type: 'AUX_2', label: 'ملامسات مساعدة للكونتاكتور (2 ملامسات)', ports: [{ id: '53', x: 35, y: 6 }, { id: '61', x: 78, y: 6 }, { id: '54', x: 35, y: 94 }, { id: '62', x: 78, y: 94 }], render: () => `<svg width="68" height="52" viewBox="0 0 68 52"><rect x="8" y="6" width="52" height="40" rx="4" fill="#1e293b" stroke="#94a3b8"/><text x="34" y="29" fill="#38bdf8" font-size="8" font-weight="bold" text-anchor="middle">NO + NC</text></svg>` },
+                    { type: 'AUX_4', label: 'ملامسات مساعدة للكونتاكتور (4 ملامسات)', ports: [{ id: '53', x: 22, y: 6 }, { id: '61', x: 45, y: 6 }, { id: '71', x: 68, y: 6 }, { id: '83', x: 90, y: 6 }, { id: '54', x: 22, y: 94 }, { id: '62', x: 45, y: 94 }, { id: '72', x: 68, y: 94 }, { id: '84', x: 90, y: 94 }], render: () => `<svg width="88" height="52" viewBox="0 0 88 52"><rect x="6" y="6" width="76" height="40" rx="4" fill="#1e293b" stroke="#38bdf8"/><text x="44" y="29" fill="#e2e8f0" font-size="8" font-weight="bold" text-anchor="middle">4-AUX BLOCK</text></svg>` },
+                    { type: 'KM_TIMER', label: 'مؤقت للكونتاكتور (Pneumatic)', ports: [{ id: '55', x: 35, y: 6 }, { id: '67', x: 78, y: 6 }, { id: '56', x: 35, y: 94 }, { id: '68', x: 78, y: 94 }], render: () => `<svg width="68" height="52" viewBox="0 0 68 52"><rect x="8" y="6" width="52" height="40" rx="4" fill="#1e293b" stroke="#10b981"/><circle cx="34" cy="26" r="11" fill="none" stroke="#10b981" stroke-width="1.8"/><text x="34" y="29" fill="#fff" font-size="7" text-anchor="middle">0.1-30s</text></svg>` },
+                    { type: 'AUX_MCB', label: 'ملامس مساعد للقاطع / قاطع المحرك', ports: [{ id: '11', x: 35, y: 6 }, { id: '14', x: 78, y: 6 }], render: () => `<svg width="56" height="52" viewBox="0 0 56 52"><rect x="14" y="6" width="28" height="40" rx="3" fill="#1e293b" stroke="#64748b"/><text x="28" y="29" fill="#94a3b8" font-size="7" text-anchor="middle">AUX</text></svg>` }
+                ]
+            },
+            {
+                name: 'المرحلات والحماية',
+                color: '#8b5cf6',
+                items: [
+                    { type: 'RELAY_2CO', label: 'مرحل 2 ملامسات تبديل', ports: [{ id: 'A1', x: 25, y: 6 }, { id: '11', x: 56, y: 6 }, { id: '21', x: 87, y: 6 }, { id: 'A2', x: 25, y: 94 }, { id: '14', x: 56, y: 94 }, { id: '24', x: 87, y: 94 }], render: (n) => `<svg width="78" height="56" viewBox="0 0 78 56"><rect x="8" y="6" width="62" height="44" rx="4" fill="#1e293b" stroke="${n.energized ? '#10b981' : '#8b5cf6'}" stroke-width="1.8"/><text x="39" y="31" fill="#e2e8f0" font-size="9" font-weight="bold" text-anchor="middle">RLY 2CO</text></svg>` },
+                    { type: 'RELAY_4CO', label: 'مرحل 4 ملامسات تبديل', ports: [{ id: 'A1', x: 25, y: 6 }, { id: '11', x: 56, y: 6 }, { id: '21', x: 87, y: 6 }, { id: 'A2', x: 25, y: 94 }, { id: '14', x: 56, y: 94 }, { id: '24', x: 87, y: 94 }], render: (n) => `<svg width="78" height="56" viewBox="0 0 78 56"><rect x="8" y="6" width="62" height="44" rx="4" fill="#1e293b" stroke="${n.energized ? '#10b981' : '#a855f7'}" stroke-width="1.8"/><text x="39" y="31" fill="#e2e8f0" font-size="9" font-weight="bold" text-anchor="middle">RLY 4CO</text></svg>` },
+                    { type: 'TIMER_RELAY', label: 'مرحل زمني (Star-Delta / On-Delay)', ports: [{ id: 'A1', x: 25, y: 6 }, { id: '15', x: 56, y: 6 }, { id: '25', x: 87, y: 6 }, { id: 'A2', x: 25, y: 94 }, { id: '16', x: 56, y: 94 }, { id: '28', x: 87, y: 94 }], render: (n) => `<svg width="78" height="56" viewBox="0 0 78 56"><rect x="8" y="6" width="62" height="44" rx="4" fill="#0f172a" stroke="#f59e0b" stroke-width="1.8"/><text x="39" y="26" fill="#fbbf24" font-size="8" font-weight="bold" text-anchor="middle">TIMER</text><text x="39" y="40" fill="#38bdf8" font-size="9" font-family="monospace" text-anchor="middle">${n.timerSec !== undefined ? n.timerSec.toFixed(1) + 's' : '5.0s'}</text></svg>` },
+                    { type: 'STAIR_TIMER', label: 'مؤقت إنارة الدرج', ports: [{ id: 'L', x: 35, y: 6 }, { id: '3', x: 78, y: 6 }, { id: 'N', x: 35, y: 94 }, { id: '4', x: 78, y: 94 }], render: () => `<svg width="68" height="56" viewBox="0 0 68 56"><rect x="8" y="6" width="52" height="44" rx="4" fill="#1e293b" stroke="#38bdf8"/><text x="34" y="31" fill="#e2e8f0" font-size="8" text-anchor="middle">STAIR T</text></svg>` },
+                    { type: 'IMPULSE_1NO', label: 'مرحل نبضي 1 NO', ports: [{ id: 'A1', x: 35, y: 6 }, { id: '1', x: 78, y: 6 }, { id: 'A2', x: 35, y: 94 }, { id: '2', x: 78, y: 94 }], render: () => `<svg width="68" height="56" viewBox="0 0 68 56"><rect x="8" y="6" width="52" height="44" rx="4" fill="#1e293b" stroke="#94a3b8"/><text x="34" y="31" fill="#fff" font-size="8" text-anchor="middle">IMP 1NO</text></svg>` },
+                    { type: 'IMPULSE_2NO', label: 'مرحل نبضي 2 NO', ports: [{ id: 'A1', x: 35, y: 6 }, { id: '1', x: 78, y: 6 }, { id: 'A2', x: 35, y: 94 }, { id: '2', x: 78, y: 94 }], render: () => `<svg width="68" height="56" viewBox="0 0 68 56"><rect x="8" y="6" width="52" height="44" rx="4" fill="#1e293b" stroke="#94a3b8"/><text x="34" y="31" fill="#fff" font-size="8" text-anchor="middle">IMP 2NO</text></svg>` },
+                    { type: 'PHASE_RELAY', label: 'مرحل مراقبة الأطوار', ports: [{ id: 'L1', x: 25, y: 6 }, { id: 'L2', x: 56, y: 6 }, { id: 'L3', x: 87, y: 6 }, { id: '15', x: 35, y: 94 }, { id: '18', x: 78, y: 94 }], render: () => `<svg width="78" height="56" viewBox="0 0 78 56"><rect x="8" y="6" width="62" height="44" rx="4" fill="#0f172a" stroke="#eab308" stroke-width="1.8"/><text x="39" y="31" fill="#facc15" font-size="9" font-weight="bold" text-anchor="middle">3φ SEQ</text></svg>` },
+                    { type: 'PTC_RELAY', label: 'مرحل ثرمستور PTC', ports: [{ id: 'A1', x: 25, y: 6 }, { id: 'T1', x: 56, y: 6 }, { id: 'T2', x: 87, y: 6 }, { id: 'A2', x: 35, y: 94 }, { id: '14', x: 78, y: 94 }], render: () => `<svg width="78" height="56" viewBox="0 0 78 56"><rect x="8" y="6" width="62" height="44" rx="4" fill="#1e293b" stroke="#38bdf8"/><text x="39" y="31" fill="#38bdf8" font-size="9" font-weight="bold" text-anchor="middle">PTC °C</text></svg>` },
+                    { type: 'SAFETY_RELAY', label: 'مرحل أمان (إيقاف طوارئ، قناتان)', ports: [{ id: 'A1', x: 25, y: 6 }, { id: 'S11', x: 56, y: 6 }, { id: 'S21', x: 87, y: 6 }, { id: 'A2', x: 35, y: 94 }, { id: '14', x: 78, y: 94 }], render: () => `<svg width="78" height="56" viewBox="0 0 78 56"><rect x="8" y="6" width="62" height="44" rx="4" fill="#ca8a04" stroke="#fef08a" stroke-width="1.8"/><text x="39" y="31" fill="#0f172a" font-size="8" font-weight="bold" text-anchor="middle">SAFETY</text></svg>` },
+                    { type: 'OVERLOAD', label: 'مرحل حراري (Thermal Overload)', ports: [{ id: '95', x: 35, y: 6 }, { id: '96', x: 78, y: 6 }, { id: 'T1', x: 25, y: 94 }, { id: 'T2', x: 56, y: 94 }, { id: 'T3', x: 87, y: 94 }], render: () => `<svg width="78" height="56" viewBox="0 0 78 56"><rect x="8" y="6" width="62" height="44" rx="4" fill="#1e293b" stroke="#f97316" stroke-width="1.8"/><text x="39" y="31" fill="#fb923c" font-size="9" font-weight="bold" text-anchor="middle">OLR 95-96</text></svg>` }
+                ]
+            },
+            {
+                name: 'أجهزة التحكم والإشارة',
+                color: '#ec4899',
+                items: [
+                    { type: 'BTN_START', label: 'زر ضاغط (أخضر) NO', ports: [{ id: '3', x: 56, y: 6 }, { id: '4', x: 56, y: 94 }], render: (n) => `<div class="push-actuator" style="background:${n.pressed ? '#22c55e' : '#15803d'};" onpointerdown="pressButton('${n.id}', true)" onpointerup="pressButton('${n.id}', false)" onpointerleave="pressButton('${n.id}', false)"></div>` },
+                    { type: 'BTN_STOP', label: 'زر ضاغط (أحمر) NC', ports: [{ id: '1', x: 56, y: 6 }, { id: '2', x: 56, y: 94 }], render: (n) => `<div class="push-actuator" style="background:${n.pressed ? '#991b1b' : '#ef4444'};" onpointerdown="pressButton('${n.id}', true)" onpointerup="pressButton('${n.id}', false)" onpointerleave="pressButton('${n.id}', false)"></div>` },
+                    { type: 'BTN_DUAL', label: 'زر ضاغط بملامسين (NO+NC)', ports: [{ id: '1', x: 35, y: 6 }, { id: '3', x: 78, y: 6 }, { id: '2', x: 35, y: 94 }, { id: '4', x: 78, y: 94 }], render: (n) => `<div class="push-actuator" style="background:${n.pressed ? '#38bdf8' : '#0284c7'};" onpointerdown="pressButton('${n.id}', true)" onpointerup="pressButton('${n.id}', false)" onpointerleave="pressButton('${n.id}', false)"></div>` },
+                    { type: 'E_STOP', label: 'إيقاف طوارئ (Emergency Stop)', ports: [{ id: '11', x: 35, y: 6 }, { id: '12', x: 78, y: 6 }], render: (n) => `<div class="push-actuator" style="background:#dc2626;border-color:#facc15;" onclick="toggleSwitchState('${n.id}')"></div><span style="font-size:0.6rem;color:#facc15;">${n.swState ? 'LOCKED' : 'READY'}</span>` },
+                    { type: 'SW_0_1', label: 'مفتاح 0-1', ports: [{ id: '1', x: 56, y: 6 }, { id: '2', x: 56, y: 94 }], render: (n) => `<button class="toggle-pill" onclick="toggleSwitchState('${n.id}')">${n.swState ? '1 (ON)' : '0 (OFF)'}</button>` },
+                    { type: 'SEL_1_0_2', label: 'مفتاح اختيار 1-0-2', ports: [{ id: 'COM', x: 56, y: 6 }, { id: '1', x: 30, y: 94 }, { id: '2', x: 82, y: 94 }], render: (n) => `<button class="toggle-pill" onclick="cycleSelector('${n.id}', 3)">POS: ${n.selPos || 0}</button>` },
+                    { type: 'SEL_1_2_3', label: 'مفتاح اختيار 1-2-3', ports: [{ id: 'COM', x: 56, y: 6 }, { id: '1', x: 25, y: 94 }, { id: '2', x: 56, y: 94 }, { id: '3', x: 87, y: 94 }], render: (n) => `<button class="toggle-pill" onclick="cycleSelector('${n.id}', 3)">STEP: ${(n.selPos || 0) + 1}</button>` },
+                    { type: 'POT_CTRL', label: 'مقاومة متغيرة (بوتنشيومتر)', ports: [{ id: '1', x: 25, y: 94 }, { id: 'W', x: 56, y: 94 }, { id: '3', x: 87, y: 94 }], render: (n) => `<input type="range" min="0" max="100" value="${n.analogVal || 50}" style="width:72px;" oninput="setAnalogVal('${n.id}', this.value)"><span style="font-size:0.6rem;color:#38bdf8;">${n.analogVal || 50}%</span>` },
+                    { type: 'LAMP_GREEN', label: 'لمبة بيان (خضراء)', ports: [{ id: 'X1', x: 35, y: 92 }, { id: 'X2', x: 78, y: 92 }], render: (n) => `<svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="${n.energized ? '#22c55e' : '#14532d'}" stroke="#4ade80" stroke-width="2"/></svg>` },
+                    { type: 'LAMP_RED', label: 'لمبة بيان (حمراء)', ports: [{ id: 'X1', x: 35, y: 92 }, { id: 'X2', x: 78, y: 92 }], render: (n) => `<svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="${n.energized ? '#ef4444' : '#7f1d1d'}" stroke="#f87171" stroke-width="2"/></svg>` },
+                    { type: 'BUZZER', label: 'طنان (Buzzer)', ports: [{ id: 'X1', x: 35, y: 92 }, { id: 'X2', x: 78, y: 92 }], render: (n) => `<svg width="48" height="48" viewBox="0 0 48 48"><circle cx="24" cy="24" r="16" fill="#1e293b" stroke="${n.energized ? '#facc15' : '#64748b'}" stroke-width="2"/><text x="24" y="27" fill="#fff" font-size="8" text-anchor="middle">${n.energized ? 'BEEP!' : 'BZ'}</text></svg>` }
+                ]
+            },
+            {
+                name: 'المشغلات وأجهزة القيادة',
+                color: '#f59e0b',
+                items: [
+                    { type: 'MOTOR_SD', label: 'محرك 3~ نجمة/دلتا (6 أطراف)', ports: [{ id: 'U1', x: 25, y: 6 }, { id: 'V1', x: 56, y: 6 }, { id: 'W1', x: 87, y: 6 }, { id: 'W2', x: 25, y: 94 }, { id: 'U2', x: 56, y: 94 }, { id: 'V2', x: 87, y: 94 }], render: (n) => `<svg width="78" height="58" viewBox="0 0 78 58"><circle cx="39" cy="29" r="21" fill="#0f172a" stroke="${n.running ? '#10b981' : '#64748b'}" stroke-width="2.2"/><g class="${n.running ? 'rotor-spinning' : ''}"><line x1="39" y1="12" x2="39" y2="46" stroke="#38bdf8" stroke-width="2"/><line x1="22" y1="29" x2="56" y2="29" stroke="#38bdf8" stroke-width="2"/></g><circle cx="39" cy="29" r="10" fill="#1e293b"/><text x="39" y="32" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">${n.sdMode || 'M Y/Δ'}</text></svg>` },
+                    { type: 'MOTOR_PTC', label: 'محرك 3~ نجمة/دلتا مع PTC', ports: [{ id: 'U1', x: 22, y: 6 }, { id: 'V1', x: 45, y: 6 }, { id: 'W1', x: 68, y: 6 }, { id: 'PTC', x: 92, y: 6 }, { id: 'W2', x: 25, y: 94 }, { id: 'U2', x: 56, y: 94 }, { id: 'V2', x: 87, y: 94 }], render: (n) => `<svg width="84" height="58" viewBox="0 0 84 58"><circle cx="42" cy="29" r="21" fill="#0f172a" stroke="${n.running ? '#10b981' : '#38bdf8'}" stroke-width="2.2"/><text x="42" y="32" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">M+PTC</text></svg>` },
+                    { type: 'MOTOR_DC24', label: 'محرك تيار مستمر 24V', ports: [{ id: '+', x: 35, y: 6 }, { id: '-', x: 78, y: 6 }], render: (n) => `<svg width="68" height="54" viewBox="0 0 68 54"><circle cx="34" cy="27" r="19" fill="#1e293b" stroke="${n.running ? '#22c55e' : '#64748b'}" stroke-width="2"/><text x="34" y="30" fill="#fff" font-size="9" font-weight="bold" text-anchor="middle">DC 24V</text></svg>` },
+                    { type: 'TOWER_2', label: 'إشارة ضوئية أحمر/أخضر', ports: [{ id: 'R', x: 30, y: 94 }, { id: 'G', x: 56, y: 94 }, { id: 'N', x: 82, y: 94 }], render: () => `<svg width="48" height="56" viewBox="0 0 48 56"><rect x="14" y="4" width="20" height="46" rx="4" fill="#0f172a" stroke="#64748b"/><circle cx="24" cy="17" r="6" fill="#ef4444"/><circle cx="24" cy="36" r="6" fill="#22c55e"/></svg>` },
+                    { type: 'TOWER_3', label: 'إشارة ضوئية أحمر/أصفر/أخضر', ports: [{ id: 'R', x: 25, y: 94 }, { id: 'Y', x: 56, y: 94 }, { id: 'G', x: 87, y: 94 }], render: () => `<svg width="48" height="58" viewBox="0 0 48 58"><rect x="14" y="4" width="20" height="50" rx="4" fill="#0f172a" stroke="#64748b"/><circle cx="24" cy="14" r="5" fill="#ef4444"/><circle cx="24" cy="29" r="5" fill="#eab308"/><circle cx="24" cy="44" r="5" fill="#22c55e"/></svg>` },
+                    { type: 'SIREN', label: 'صفارة إنذار / جرس إنذار', ports: [{ id: 'L', x: 35, y: 94 }, { id: 'N', x: 78, y: 94 }], render: () => `<svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="27" r="18" fill="#7f1d1d" stroke="#ef4444" stroke-width="2"/><circle cx="27" cy="27" r="7" fill="#ef4444"/></svg>` },
+                    { type: 'HEATER_FAN', label: 'سخان (مانع للتكاثف) + مروحة', ports: [{ id: 'L', x: 35, y: 94 }, { id: 'N', x: 78, y: 94 }], render: () => `<svg width="64" height="54" viewBox="0 0 64 54"><rect x="10" y="6" width="44" height="42" rx="4" fill="#1e293b" stroke="#94a3b8"/><circle cx="32" cy="27" r="13" fill="none" stroke="#38bdf8" stroke-width="1.8"/><text x="32" y="30" fill="#fff" font-size="7" text-anchor="middle">FAN/HT</text></svg>` },
+                    { type: 'VFD_400V', label: 'مغير سرعة 3P 400V (VFD)', ports: [{ id: 'L1', x: 25, y: 6 }, { id: 'L2', x: 56, y: 6 }, { id: 'RUN', x: 87, y: 6 }, { id: 'U', x: 25, y: 94 }, { id: 'V', x: 56, y: 94 }, { id: 'W', x: 87, y: 94 }], render: (n) => `<svg width="82" height="60" viewBox="0 0 82 60"><rect x="6" y="6" width="70" height="48" rx="5" fill="#0f172a" stroke="#3b82f6" stroke-width="2"/><rect x="16" y="12" width="50" height="16" rx="2" fill="#020617"/><text x="41" y="23" fill="#22c55e" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">${n.running ? '50.0 Hz' : '0.0 Hz'}</text><text x="41" y="44" fill="#94a3b8" font-size="8" font-weight="bold" text-anchor="middle">VFD 400V</text></svg>` },
+                    { type: 'SOFT_STARTER', label: 'بادئ ناعم 3P 400V (Soft Starter)', ports: [{ id: 'L1', x: 25, y: 6 }, { id: 'L2', x: 56, y: 6 }, { id: 'ST', x: 87, y: 6 }, { id: 'T1', x: 25, y: 94 }, { id: 'T2', x: 56, y: 94 }, { id: 'T3', x: 87, y: 94 }], render: () => `<svg width="82" height="60" viewBox="0 0 82 60"><rect x="6" y="6" width="70" height="48" rx="5" fill="#1e293b" stroke="#06b6d4" stroke-width="2"/><text x="41" y="33" fill="#38bdf8" font-size="8" font-weight="bold" text-anchor="middle">SOFT START</text></svg>` }
+                ]
+            },
+            {
+                name: 'الحساسات والمرسلات',
+                color: '#06b6d4',
+                items: [
+                    { type: 'LIMIT_SW', label: 'مفتاح نهاية شوط (Limit Switch)', ports: [{ id: '13', x: 35, y: 6 }, { id: '14', x: 78, y: 6 }], render: (n) => `<button class="toggle-pill" onclick="toggleSwitchState('${n.id}')">LS: ${n.swState ? 'HIT' : 'OPEN'}</button>` },
+                    { type: 'FLOAT_SW', label: 'مفتاح مستوى (عوامة)', ports: [{ id: 'COM', x: 35, y: 6 }, { id: 'NO', x: 78, y: 6 }], render: (n) => `<button class="toggle-pill" onclick="toggleSwitchState('${n.id}')">FLOAT: ${n.swState ? 'HIGH' : 'LOW'}</button>` },
+                    { type: 'THERMOSTAT', label: 'ثرموستات (تدفئة NC / تبريد NO)', ports: [{ id: '1', x: 35, y: 6 }, { id: '2', x: 78, y: 6 }], render: (n) => `<button class="toggle-pill" onclick="toggleSwitchState('${n.id}')">TEMP: ${n.swState ? 'ON' : 'OFF'}</button>` },
+                    { type: 'PROX_PNP', label: 'حساس حثي PNP NO', ports: [{ id: 'BN+', x: 25, y: 6 }, { id: 'BK', x: 56, y: 6 }, { id: 'BU-', x: 87, y: 6 }], render: (n) => `<button class="toggle-pill" onclick="toggleSwitchState('${n.id}')">PNP: ${n.swState ? 'DETECT' : 'IDLE'}</button>` },
+                    { type: 'PROX_NPN', label: 'حساس حثي NPN NO', ports: [{ id: 'BN+', x: 25, y: 6 }, { id: 'BK', x: 56, y: 6 }, { id: 'BU-', x: 87, y: 6 }], render: (n) => `<button class="toggle-pill" onclick="toggleSwitchState('${n.id}')">NPN: ${n.swState ? 'DETECT' : 'IDLE'}</button>` },
+                    { type: 'TX_LEVEL_420', label: 'مرسل مستوى هيدروستاتيكي / فوق صوتي (4-20mA)', ports: [{ id: '24V', x: 35, y: 6 }, { id: 'OUT', x: 78, y: 6 }], render: () => `<svg width="74" height="50" viewBox="0 0 74 50"><rect x="12" y="6" width="50" height="38" rx="4" fill="#1e293b" stroke="#06b6d4"/><text x="37" y="28" fill="#38bdf8" font-size="8" font-weight="bold" text-anchor="middle">LT 4-20mA</text></svg>` },
+                    { type: 'TX_PRESSURE', label: 'مرسل ضغط 0-10 bar (0-10V / 4-20mA)', ports: [{ id: '24V', x: 35, y: 6 }, { id: 'OUT', x: 78, y: 6 }], render: () => `<svg width="74" height="50" viewBox="0 0 74 50"><rect x="12" y="6" width="50" height="38" rx="4" fill="#1e293b" stroke="#3b82f6"/><text x="37" y="28" fill="#60a5fa" font-size="8" font-weight="bold" text-anchor="middle">PT 10bar</text></svg>` },
+                    { type: 'TX_FLOW', label: 'مرسل تدفق 0-100 m³/h (0-10V / 4-20mA)', ports: [{ id: '24V', x: 35, y: 6 }, { id: 'OUT', x: 78, y: 6 }], render: () => `<svg width="74" height="50" viewBox="0 0 74 50"><rect x="12" y="6" width="50" height="38" rx="4" fill="#1e293b" stroke="#10b981"/><text x="37" y="28" fill="#34d399" font-size="8" font-weight="bold" text-anchor="middle">FT m³/h</text></svg>` },
+                    { type: 'TX_TEMP', label: 'مرسل حرارة 0-100 °C (0-10V / 4-20mA)', ports: [{ id: '24V', x: 35, y: 6 }, { id: 'OUT', x: 78, y: 6 }], render: () => `<svg width="74" height="50" viewBox="0 0 74 50"><rect x="12" y="6" width="50" height="38" rx="4" fill="#1e293b" stroke="#f59e0b"/><text x="37" y="28" fill="#fbbf24" font-size="8" font-weight="bold" text-anchor="middle">TT 100°C</text></svg>` }
+                ]
+            },
+            {
+                name: 'القياس والعدادات',
+                color: '#eab308',
+                items: [
+                    { type: 'VOLTMETER', label: 'فولتميتر 0-500V', ports: [{ id: 'V1', x: 35, y: 94 }, { id: 'V2', x: 78, y: 94 }], render: (n) => `<svg width="64" height="56" viewBox="0 0 64 56"><rect x="8" y="6" width="48" height="44" rx="4" fill="#0f172a" stroke="#94a3b8"/><text x="32" y="31" fill="#38bdf8" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">${n.voltVal || '398 V'}</text></svg>` },
+                    { type: 'AMMETER', label: 'أميتر x/5A + محول تيار CT', ports: [{ id: 'S1', x: 35, y: 94 }, { id: 'S2', x: 78, y: 94 }], render: (n) => `<svg width="64" height="56" viewBox="0 0 64 56"><rect x="8" y="6" width="48" height="44" rx="4" fill="#0f172a" stroke="#94a3b8"/><text x="32" y="31" fill="#facc15" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">${n.ampVal || '0.0 A'}</text></svg>` },
+                    { type: 'SEL_VA', label: 'مفتاح اختيار الفولتميتر / الأميتر', ports: [{ id: '1', x: 35, y: 6 }, { id: '2', x: 78, y: 6 }], render: (n) => `<button class="toggle-pill" onclick="cycleSelector('${n.id}', 4)">L1-L2-L3</button>` },
+                    { type: 'FREQ_METER', label: 'مقياس تردد 45-65Hz', ports: [{ id: 'L', x: 35, y: 94 }, { id: 'N', x: 78, y: 94 }], render: () => `<svg width="64" height="56" viewBox="0 0 64 56"><rect x="8" y="6" width="48" height="44" rx="4" fill="#0f172a" stroke="#94a3b8"/><text x="32" y="31" fill="#10b981" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">50.0Hz</text></svg>` },
+                    { type: 'HOUR_METER', label: 'عداد ساعات 230V', ports: [{ id: 'L', x: 35, y: 94 }, { id: 'N', x: 78, y: 94 }], render: () => `<svg width="64" height="56" viewBox="0 0 64 56"><rect x="8" y="6" width="48" height="44" rx="4" fill="#1e293b" stroke="#64748b"/><text x="32" y="31" fill="#f8fafc" font-size="9" font-family="monospace" text-anchor="middle">00142h</text></svg>` },
+                    { type: 'KWH_METER', label: 'عداد طاقة 1P+N / 3P+N (kWh)', ports: [{ id: 'L1', x: 25, y: 6 }, { id: 'L2', x: 56, y: 6 }, { id: 'N', x: 87, y: 6 }], render: () => `<svg width="78" height="56" viewBox="0 0 78 56"><rect x="8" y="6" width="62" height="44" rx="4" fill="#1e293b" stroke="#10b981"/><text x="39" y="31" fill="#34d399" font-size="9" font-family="monospace" font-weight="bold" text-anchor="middle">124.8 kWh</text></svg>` },
+                    { type: 'MULTIMETER', label: 'مالتيميتر وبنسة أمبير (Clamp Meter)', ports: [{ id: 'V+', x: 35, y: 6 }, { id: 'COM', x: 78, y: 6 }], render: (n) => `<svg width="78" height="62" viewBox="0 0 78 62"><rect x="10" y="4" width="58" height="54" rx="5" fill="#d97706" stroke="#fbbf24" stroke-width="1.5"/><rect x="16" y="10" width="46" height="20" rx="2" fill="#ecfccb"/><text x="39" y="24" fill="#111827" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle">${n.reading || '0.00 A'}</text><circle cx="39" cy="43" r="8" fill="#1f2937"/></svg>` }
+                ]
+            },
+            {
+                name: 'أنظمة الـ PLC والعملية',
+                color: '#10b981',
+                items: [
+                    { type: 'PLC_8DI_4DO', label: 'PLC صغير 8DI / 4DO', ports: [{ id: 'I0.0', x: 25, y: 6 }, { id: 'I0.1', x: 56, y: 6 }, { id: 'IW64', x: 87, y: 6 }, { id: 'Q0.0', x: 25, y: 94 }, { id: 'Q0.1', x: 56, y: 94 }, { id: '0V', x: 87, y: 94 }], render: (n) => `<svg width="96" height="60" viewBox="0 0 96 60"><rect x="4" y="6" width="88" height="48" rx="5" fill="#0f172a" stroke="#10b981" stroke-width="1.8"/><text x="48" y="25" fill="#34d399" font-size="9" font-weight="bold" text-anchor="middle">PLC 8DI/4DO</text><circle cx="26" cy="40" r="3.5" fill="${n.q0 ? '#22c55e' : '#334155'}"/><circle cx="42" cy="40" r="3.5" fill="${n.q1 ? '#22c55e' : '#334155'}"/></svg>` },
+                    { type: 'PLC_14IO', label: 'PLC مدمج 14 I/O (8DI / 6DO)', ports: [{ id: 'I0.0', x: 25, y: 6 }, { id: 'I0.1', x: 56, y: 6 }, { id: 'IW64', x: 87, y: 6 }, { id: 'Q0.0', x: 25, y: 94 }, { id: 'Q0.1', x: 56, y: 94 }, { id: '0V', x: 87, y: 94 }], render: (n) => `<svg width="102" height="60" viewBox="0 0 102 60"><rect x="4" y="6" width="94" height="48" rx="5" fill="#0f172a" stroke="#06b6d4" stroke-width="1.8"/><text x="51" y="25" fill="#38bdf8" font-size="9" font-weight="bold" text-anchor="middle">PLC 14 I/O</text><circle cx="26" cy="40" r="3.5" fill="${n.q0 ? '#22c55e' : '#334155'}"/><circle cx="42" cy="40" r="3.5" fill="${n.q1 ? '#22c55e' : '#334155'}"/></svg>` },
+                    { type: 'PLC_24IO', label: 'PLC مدمج 24 I/O (14DI / 10DO)', ports: [{ id: 'I0.0', x: 25, y: 6 }, { id: 'I0.1', x: 56, y: 6 }, { id: 'IW64', x: 87, y: 6 }, { id: 'Q0.0', x: 25, y: 94 }, { id: 'Q0.1', x: 56, y: 94 }, { id: '0V', x: 87, y: 94 }], render: (n) => `<svg width="106" height="60" viewBox="0 0 106 60"><rect x="4" y="6" width="98" height="48" rx="5" fill="#0f172a" stroke="#3b82f6" stroke-width="1.8"/><text x="53" y="25" fill="#60a5fa" font-size="9" font-weight="bold" text-anchor="middle">PLC 24 I/O</text><circle cx="26" cy="40" r="3.5" fill="${n.q0 ? '#22c55e' : '#334155'}"/><circle cx="42" cy="40" r="3.5" fill="${n.q1 ? '#22c55e' : '#334155'}"/></svg>` },
+                    { type: 'PUMP_1P', label: 'مضخة خزان ماء / محطة صرف (P1)', ports: [{ id: 'L', x: 35, y: 6 }, { id: 'N', x: 78, y: 6 }], render: (n) => `<svg width="72" height="56" viewBox="0 0 72 56"><circle cx="36" cy="28" r="19" fill="${n.running ? '#065f46' : '#1e293b'}" stroke="#10b981" stroke-width="2"/><text x="36" y="32" fill="#fff" font-size="9" font-weight="bold" text-anchor="middle">PUMP</text></svg>` }
+                ]
+            },
+            {
+                name: 'الأردوينو والإلكترونيات (Arduino)',
+                color: '#0284c7',
+                items: [
+                    { type: 'ARDUINO_UNO', label: 'لوحة Arduino Uno R3', ports: [{ id: '5V', x: 22, y: 6 }, { id: 'GND', x: 56, y: 6 }, { id: 'A0', x: 90, y: 6 }, { id: 'D2', x: 22, y: 94 }, { id: 'D7', x: 56, y: 94 }, { id: 'D9', x: 90, y: 94 }], render: (n) => `<svg width="102" height="60" viewBox="0 0 102 60"><rect x="4" y="6" width="94" height="48" rx="5" fill="#0e7490" stroke="#22d3ee" stroke-width="1.8"/><text x="51" y="28" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">ARDUINO UNO</text><circle cx="82" cy="40" r="3.5" fill="${n.d7 ? '#facc15' : '#164e63'}"/></svg>` },
+                    { type: 'ARDUINO_MEGA', label: 'لوحة Arduino Mega 2560', ports: [{ id: '5V', x: 22, y: 6 }, { id: 'GND', x: 56, y: 6 }, { id: 'A0', x: 90, y: 6 }, { id: 'D7', x: 35, y: 94 }, { id: 'D9', x: 78, y: 94 }], render: () => `<svg width="106" height="60" viewBox="0 0 106 60"><rect x="4" y="6" width="98" height="48" rx="5" fill="#1d4ed8" stroke="#60a5fa" stroke-width="1.8"/><text x="53" y="33" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">MEGA 2560</text></svg>` },
+                    { type: 'ESP32_BOARD', label: 'لوحة ESP32 Wi-Fi / IoT', ports: [{ id: '3V3', x: 22, y: 6 }, { id: 'GND', x: 56, y: 6 }, { id: 'GPIO4', x: 90, y: 6 }], render: () => `<svg width="96" height="60" viewBox="0 0 96 60"><rect x="4" y="6" width="88" height="48" rx="5" fill="#1e293b" stroke="#38bdf8" stroke-width="1.8"/><text x="48" y="33" fill="#38bdf8" font-size="9" font-weight="bold" text-anchor="middle">ESP32 IoT</text></svg>` },
+                    { type: 'RELAY_5V', label: 'وحدة ريليه 5V (عزل للأردوينو)', ports: [{ id: 'VCC', x: 22, y: 6 }, { id: 'GND', x: 56, y: 6 }, { id: 'IN', x: 90, y: 6 }, { id: 'COM', x: 35, y: 94 }, { id: 'NO', x: 78, y: 94 }], render: (n) => `<svg width="94" height="58" viewBox="0 0 94 58"><rect x="6" y="6" width="82" height="46" rx="5" fill="#064e3b" stroke="#10b981" stroke-width="1.8"/><rect x="22" y="16" width="50" height="24" rx="3" fill="#2563eb"/><text x="47" y="31" fill="#fff" font-size="8" font-weight="bold" text-anchor="middle">${n.energized ? 'RELAY ON' : '5V RELAY'}</text></svg>` },
+                    { type: 'HCSR04', label: 'حساس مسافة فوق صوتي HC-SR04', ports: [{ id: 'VCC', x: 22, y: 94 }, { id: 'TRIG', x: 56, y: 94 }, { id: 'GND', x: 90, y: 94 }], render: () => `<svg width="86" height="50" viewBox="0 0 86 50"><rect x="6" y="8" width="74" height="34" rx="4" fill="#1d4ed8" stroke="#93c5fd"/><circle cx="26" cy="25" r="10" fill="#cbd5e1" stroke="#475569"/><circle cx="60" cy="25" r="10" fill="#cbd5e1" stroke="#475569"/></svg>` },
+                    { type: 'DHT22', label: 'حساس حرارة ورطوبة DHT22', ports: [{ id: 'VCC', x: 25, y: 94 }, { id: 'DATA', x: 56, y: 94 }, { id: 'GND', x: 87, y: 94 }], render: () => `<svg width="64" height="54" viewBox="0 0 64 54"><rect x="14" y="6" width="36" height="42" rx="4" fill="#f8fafc" stroke="#94a3b8"/><text x="32" y="30" fill="#0f172a" font-size="8" font-weight="bold" text-anchor="middle">DHT22</text></svg>` },
+                    { type: 'SERVO_MOTOR', label: 'محرك سيرفو Servo Motor (0-180°)', ports: [{ id: '5V', x: 25, y: 94 }, { id: 'PWM', x: 56, y: 94 }, { id: 'GND', x: 87, y: 94 }], render: (n) => `<svg width="78" height="54" viewBox="0 0 78 54"><rect x="12" y="12" width="54" height="30" rx="4" fill="#1e293b" stroke="#38bdf8" stroke-width="1.8"/><circle cx="52" cy="27" r="9" fill="#334155" stroke="#fff"/><line x1="52" y1="27" x2="${n.servoOn ? '68' : '52'}" y2="${n.servoOn ? '15' : '11'}" stroke="#f59e0b" stroke-width="3"/></svg>` },
+                    { type: 'LCD_I2C', label: 'شاشة LCD 16x2 I2C', ports: [{ id: 'VCC', x: 25, y: 94 }, { id: 'SDA', x: 56, y: 94 }, { id: 'GND', x: 87, y: 94 }], render: (n) => `<svg width="96" height="54" viewBox="0 0 96 54"><rect x="6" y="8" width="84" height="38" rx="4" fill="#15803d" stroke="#4ade80"/><rect x="12" y="13" width="72" height="28" fill="#65a30d"/><text x="48" y="30" fill="#052e16" font-size="8" font-family="monospace" font-weight="bold" text-anchor="middle">${n.lcdText || 'VoltAI Ready'}</text></svg>` },
+                    { type: 'LED_220', label: 'ليد ضوئي + مقاومة 220Ω', ports: [{ id: 'ANODE', x: 35, y: 94 }, { id: 'CATH', x: 78, y: 94 }], render: (n) => `<svg width="54" height="54" viewBox="0 0 54 54"><circle cx="27" cy="24" r="12" fill="${n.energized ? '#facc15' : '#422006'}" stroke="#facc15" stroke-width="2"/></svg>` }
+                ]
+            }
+        ];
+        /* =========================================================
+           2. WORKSPACE STATE, PALETTE BUILDER & ORTHOGONAL WIRING
+           ========================================================= */
+        let nodes = [];
+        let wires = [];
+        let nodeSeq = 0;
+        let pendingPort = null;
+        let currentWireColor = '#ef4444';
+        let isRunning = false;
+        let simInterval = null;
+
+        // Live Process Simulation States (Water Tank & Sewage Station)
+        let tankLevel = 49;
+        let outletOpen = true;
+        let sewageLevel = 58;
+        let activeSewagePumps = 0;
+
+        // PLC & Arduino States
+        let plcAutoLatch = false;
+        let customLadderRungs = [];
+        let arduinoCode = `// مشروع أردوينو للتحكم الأوتوماتيكي بالمضخة والسيرفو
+#include <Servo.h>
+Servo valveServo;
+
+const int sensorPin = A0;  // حساس المستوى / مقاومة متغيرة
+const int relayPin  = 7;   // مخرج الريليه 5V (D7)
+const int servoPin  = 9;   // مخرج محرك السيرفو (D9)
+
+void setup() {
+  pinMode(relayPin, OUTPUT);
+  valveServo.attach(servoPin);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int level = analogRead(sensorPin);
+  if (level < 40) {
+    digitalWrite(relayPin, HIGH); // تشغيل المضخة
+    valveServo.write(90);         // فتح الصمام
+  } else if (level >= 85) {
+    digitalWrite(relayPin, LOW);  // إيقاف المضخة
+    valveServo.write(0);          // إغلاق الصمام
+  }
+  delay(200);
+}`;
+
+        function buildPalette() {
+            const container = document.getElementById('paletteContainer');
+            if (!container) return;
+            container.innerHTML = '';
+            CATEGORIES.forEach((cat, idx) => {
+                const grp = document.createElement('div');
+                grp.className = 'cat-group';
+                grp.innerHTML = `
+                    <div class="cat-header" onclick="this.nextElementSibling.classList.toggle('closed')">
+                        <span><span class="cat-dot" style="background:${cat.color};"></span>${cat.name}</span>
+                        <span style="color:#9ca3af;font-size:0.74rem;">${cat.items.length} ▾</span>
+                    </div>
+                    <div class="cat-items ${idx > 3 ? 'closed' : ''}">
+                        ${cat.items.map(it => `
+                            <div class="palette-item" data-label="${it.label}" onclick="spawnComponent('${it.type}')">
+                                <div class="palette-thumb">⚡</div>
+                                <span>${it.label}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(grp);
+            });
+        }
+
+        function filterPalette() {
+            const q = document.getElementById('compSearch').value.trim().toLowerCase();
+            document.querySelectorAll('.cat-items').forEach(list => {
+                if (q.length > 0) list.classList.remove('closed');
+            });
+            document.querySelectorAll('.palette-item').forEach(el => {
+                const match = el.getAttribute('data-label').toLowerCase().includes(q);
+                el.style.display = match ? 'flex' : 'none';
+            });
+        }
+
+        function toggleSidebar() {
+            document.getElementById('compSidebar').classList.toggle('collapsed');
+        }
+
+        function setWireColor(hex, dot) {
+            currentWireColor = hex;
+            document.querySelectorAll('.w-color-dot').forEach(d => d.classList.remove('active'));
+            if (dot) dot.classList.add('active');
+        }
+
+        function getCompDef(type) {
+            for (const c of CATEGORIES) {
+                const found = c.items.find(i => i.type === type);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function spawnComponent(type, customX, customY, customTag) {
+            const def = getCompDef(type);
+            if (!def) return null;
+            nodeSeq++;
+            const id = 'node_' + nodeSeq;
+            const area = document.getElementById('canvasArea');
+            const maxW = Math.max(140, (area.clientWidth || 600) - 420);
+            const maxH = Math.max(140, (area.clientHeight || 500) - 190);
+            const x = customX !== undefined ? customX : 55 + ((nodeSeq * 38) % maxW);
+            const y = customY !== undefined ? customY : 58 + ((nodeSeq * 34) % maxH);
+
+            const node = {
+                id,
+                type,
+                x,
+                y,
+                tag: customTag || (type.split('_')[0] + '-' + nodeSeq),
+                pressed: false,
+                swState: false,
+                selPos: 0,
+                analogVal: 50,
+                timerSec: 5.0,
+                timerDone: false,
+                energized: false,
+                running: false,
+                tripped: false,
+                sdMode: 'M Y/Δ',
+                reading: '0.00 A',
+                voltVal: '398 V',
+                ampVal: '0.0 A',
+                q0: false,
+                q1: false,
+                d7: false,
+                servoOn: false,
+                lcdText: 'VoltAI Ready'
+            };
+            nodes.push(node);
+            renderAllNodes();
+            return node;
+        }
+
+        function renderAllNodes() {
+            const area = document.getElementById('canvasArea');
+            area.querySelectorAll('.sim-node').forEach(el => el.remove());
+
+            nodes.forEach(node => {
+                const def = getCompDef(node.type);
+                if (!def) return;
+                const el = document.createElement('div');
+                el.className = 'sim-node';
+                el.id = node.id;
+                el.style.left = node.x + 'px';
+                el.style.top = node.y + 'px';
+
+                const portsHtml = def.ports.map(p => {
+                    const isTop = p.y < 50;
+                    return `
+                        <div class="term-port" style="left:${p.x}px;top:${p.y}px;"
+                             onclick="handlePortClick(event, '${node.id}', '${p.id}')">
+                            <span class="term-lbl" style="${isTop ? 'top:-13px;' : 'bottom:-13px;'}">${p.id}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                el.innerHTML = `
+                    <div class="node-body">
+                        <button class="node-del" onclick="deleteNode(event, '${node.id}')">✕</button>
+                        <div class="node-tag">${node.tag}</div>
+                        ${def.render(node)}
+                        ${portsHtml}
+                    </div>
+                `;
+
+                enableDrag(el, node);
+                area.appendChild(el);
+            });
+            drawWires();
+        }
+
+        function enableDrag(el, node) {
+            let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+            el.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('.term-port') ||
+                    e.target.closest('.push-actuator') ||
+                    e.target.closest('.toggle-pill') ||
+                    e.target.tagName === 'INPUT' ||
+                    e.target.tagName === 'BUTTON') return;
+                dragging = true;
+                sx = e.clientX;
+                sy = e.clientY;
+                ox = node.x;
+                oy = node.y;
+                el.setPointerCapture(e.pointerId);
+            });
+            el.addEventListener('pointermove', (e) => {
+                if (!dragging) return;
+                node.x = Math.max(10, ox + (e.clientX - sx));
+                node.y = Math.max(46, oy + (e.clientY - sy));
+                el.style.left = node.x + 'px';
+                el.style.top = node.y + 'px';
+                drawWires();
+            });
+            el.addEventListener('pointerup', (e) => {
+                if (dragging) {
+                    dragging = false;
+                    el.releasePointerCapture(e.pointerId);
+                }
+            });
+        }
+
+        function deleteNode(ev, id) {
+            ev.stopPropagation();
+            nodes = nodes.filter(n => n.id !== id);
+            wires = wires.filter(w => w.fromNode !== id && w.toNode !== id);
+            cancelWiring();
+            renderAllNodes();
+        }
+
+        function handlePortClick(ev, nodeId, portId) {
+            ev.stopPropagation();
+            if (!pendingPort) {
+                pendingPort = { nodeId, portId };
+                ev.currentTarget.classList.add('active-pin');
+                document.getElementById('wiringHint').textContent = `اختر الطرف الثاني من [${portId}]...`;
+                return;
+            }
+            if (pendingPort.nodeId === nodeId && pendingPort.portId === portId) {
+                cancelWiring();
+                return;
+            }
+            connectPorts(pendingPort.nodeId, pendingPort.portId, nodeId, portId, currentWireColor);
+            cancelWiring();
+        }
+
+        function connectPorts(fromNode, fromPort, toNode, toPort, color) {
+            const dup = wires.some(w =>
+                (w.fromNode === fromNode && w.fromPort === fromPort && w.toNode === toNode && w.toPort === toPort) ||
+                (w.fromNode === toNode && w.fromPort === toPort && w.toNode === fromNode && w.toPort === fromPort)
+            );
+            if (!dup) {
+                wires.push({
+                    id: 'w_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+                    fromNode,
+                    fromPort,
+                    toNode,
+                    toPort,
+                    color: color || '#ef4444',
+                    live: false,
+                    shorted: false
+                });
+                drawWires();
+            }
+        }
+
+        function cancelWiring() {
+            pendingPort = null;
+            document.querySelectorAll('.term-port.active-pin').forEach(p => p.classList.remove('active-pin'));
+            document.getElementById('wiringHint').textContent = '';
+        }
+
+        function getPortXY(nodeId, portId) {
+            const node = nodes.find(n => n.id === nodeId);
+            if (!node) return null;
+            const def = getCompDef(node.type);
+            if (!def) return null;
+            const port = def.ports.find(p => p.id === portId);
+            if (!port) return null;
+            return { x: node.x + port.x, y: node.y + port.y };
+        }
+
+        function drawWires() {
+            const svg = document.getElementById('wiresSvg');
+            if (!svg) return;
+            svg.innerHTML = '';
+            wires.forEach(w => {
+                const p1 = getPortXY(w.fromNode, w.fromPort);
+                const p2 = getPortXY(w.toNode, w.toPort);
+                if (!p1 || !p2) return;
+
+                const midY = Math.round((p1.y + p2.y) / 2);
+                const d = `M ${p1.x} ${p1.y} L ${p1.x} ${midY} L ${p2.x} ${midY} L ${p2.x} ${p2.y}`;
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', d);
+                path.setAttribute('stroke', w.color);
+                path.setAttribute('stroke-width', '3.1');
+                path.classList.add('wire-stroke');
+                if (w.live) path.classList.add('wire-energized');
+                if (w.shorted) path.classList.add('wire-shorted');
+                path.onclick = (e) => {
+                    e.stopPropagation();
+                    wires = wires.filter(item => item.id !== w.id);
+                    drawWires();
+                };
+                svg.appendChild(path);
+            });
+        }
+
+        /* =========================================================
+           3. INTERACTIVE CONTROLS, FAULT DETECTOR & LIVE LOGIC ENGINE
+           ========================================================= */
+        function pressButton(nodeId, state) {
+            const n = nodes.find(x => x.id === nodeId);
+            if (!n) return;
+            n.pressed = state;
+            if (isRunning) evaluateCircuitStep();
+            renderAllNodes();
+        }
+
+        function toggleSwitchState(nodeId) {
+            const n = nodes.find(x => x.id === nodeId);
+            if (!n) return;
+            n.swState = !n.swState;
+            if (isRunning) evaluateCircuitStep();
+            renderAllNodes();
+        }
+
+        function cycleSelector(nodeId, maxSteps) {
+            const n = nodes.find(x => x.id === nodeId);
+            if (!n) return;
+            n.selPos = ((n.selPos || 0) + 1) % maxSteps;
+            if (isRunning) evaluateCircuitStep();
+            renderAllNodes();
+        }
+
+        function setAnalogVal(nodeId, val) {
+            const n = nodes.find(x => x.id === nodeId);
+            if (!n) return;
+            n.analogVal = parseInt(val, 10) || 0;
+            tankLevel = n.analogVal;
+            if (isRunning) evaluateCircuitStep();
+        }
+
+        function toggleSimulation() {
+            if (isRunning) return;
+            isRunning = true;
+            document.getElementById('btnRunSim').classList.add('run-active');
+            document.getElementById('simStatusText').textContent = 'الوضع: المحاكاة الحية تعمل (Online) — اضغط على الأزرار والمفاتيح';
+            runFaultDiagnostics();
+            simInterval = setInterval(evaluateCircuitStep, 250);
+        }
+
+        function stopSimulation() {
+            isRunning = false;
+            clearInterval(simInterval);
+            plcAutoLatch = false;
+            document.getElementById('btnRunSim').classList.remove('run-active');
+            document.getElementById('simStatusText').textContent = 'الوضع: متوقف | 77 عنصر صناعي وإلكتروني جاهز';
+            document.getElementById('faultToast').style.display = 'none';
+            nodes.forEach(n => {
+                n.energized = false;
+                n.running = false;
+                n.tripped = false;
+                n.timerSec = 5.0;
+                n.timerDone = false;
+                n.sdMode = 'M Y/Δ';
+                n.q0 = false;
+                n.q1 = false;
+                n.d7 = false;
+                n.servoOn = false;
+                n.reading = '0.00 A';
+                n.ampVal = '0.0 A';
+            });
+            wires.forEach(w => { w.live = false; w.shorted = false; });
+            renderAllNodes();
+        }
+
+        function runFaultDiagnostics() {
+            const toast = document.getElementById('faultToast');
+            let faults = [];
+
+            // 1. Direct Short Circuit (Phase to Neutral/GND)
+            const hotNames = ['L1', 'L2', 'L3', '1', '3', '5', 'L'];
+            const neutralNames = ['N', 'N1', 'N2', 'GND', '0V'];
+            wires.forEach(w => {
+                w.shorted = false;
+                if ((hotNames.includes(w.fromPort) && neutralNames.includes(w.toPort)) ||
+                    (neutralNames.includes(w.fromPort) && hotNames.includes(w.toPort))) {
+                    w.shorted = true;
+                    faults.push('💥 <strong>قصر كهربائي مباشر (Short Circuit):</strong> تم ربط خط فاز مباشرة مع النيوترال/الأرضي! تم فصل القاطع للحماية.');
+                }
+            });
+
+            // 2. 3-Phase Motor Phase Loss
+            nodes.filter(n => n.type === 'MOTOR_SD' || n.type === 'MOTOR_PTC').forEach(m => {
+                const fedU = wires.some(w => (w.fromNode === m.id && w.fromPort === 'U1') || (w.toNode === m.id && w.toPort === 'U1'));
+                const fedV = wires.some(w => (w.fromNode === m.id && w.fromPort === 'V1') || (w.toNode === m.id && w.toPort === 'V1'));
+                const fedW = wires.some(w => (w.fromNode === m.id && w.fromPort === 'W1') || (w.toNode === m.id && w.toPort === 'W1'));
+                const count = [fedU, fedV, fedW].filter(Boolean).length;
+                if (count > 0 && count < 3) {
+                    faults.push(`⚠️ <strong>فقدان فاز (Phase Loss) على ${m.tag}:</strong> المحرك موصول بـ ${count} من أصل 3 فازات فقط!`);
+                }
+            });
+
+            // 3. Contactor Coil Open Return (A1 without A2)
+            nodes.filter(n => n.type.startsWith('KM_3P')).forEach(km => {
+                const hasA1 = wires.some(w => (w.fromNode === km.id && w.fromPort === 'A1') || (w.toNode === km.id && w.toPort === 'A1'));
+                const hasA2 = wires.some(w => (w.fromNode === km.id && w.fromPort === 'A2') || (w.toNode === km.id && w.toPort === 'A2'));
+                if (hasA1 && !hasA2) {
+                    faults.push(`🔌 <strong>دائرة ملف مفتوحة (${km.tag}):</strong> الطرف A1 موصول ولكن الطرف A2 غير متصل بالنيوترال (N).`);
+                }
+            });
+
+            // 4. Arduino Overvoltage Check
+            nodes.filter(n => n.type === 'ARDUINO_UNO' || n.type === 'ARDUINO_MEGA' || n.type === 'ESP32_BOARD').forEach(ard => {
+                const dangerWire = wires.some(w =>
+                    (w.fromNode === ard.id && ['L1', 'L2', 'L3', '2', '4', '6'].includes(w.toPort)) ||
+                    (w.toNode === ard.id && ['L1', 'L2', 'L3', '2', '4', '6'].includes(w.fromPort))
+                );
+                if (dangerWire) {
+                    faults.push(`🔥 <strong>خطر تلف المتحكم (${ard.tag}):</strong> تم توصيل جهد 220V/380V مباشرة بأطراف 5V/3.3V! استخدم وحدة <code>5V RELAY</code> للعزل.`);
+                }
+            });
+
+            if (faults.length > 0) {
+                nodes.filter(n => n.type.startsWith('MCB') || n.type === 'MPCB').forEach(b => b.tripped = true);
+                toast.innerHTML = faults.join('<br>');
+                toast.style.display = 'block';
+            } else {
+                toast.style.display = 'none';
+            }
+            renderAllNodes();
+        }
+
+        function evaluateCircuitStep() {
+            if (wires.some(w => w.shorted)) return;
+
+            const startBtn = nodes.find(n => n.type === 'BTN_START' || n.type === 'BTN_DUAL');
+            const stopBtn = nodes.find(n => n.type === 'BTN_STOP');
+            const eStop = nodes.find(n => n.type === 'E_STOP');
+            const swOn = nodes.find(n => n.type === 'SW_0_1' || n.type === 'FLOAT_SW' || n.type === 'LIMIT_SW' || n.type === 'PROX_PNP' || n.type === 'THERMOSTAT');
+
+            const isStopped = (stopBtn && stopBtn.pressed) || (eStop && eStop.swState);
+            const triggerActive = (startBtn && startBtn.pressed) || (swOn && swOn.swState);
+
+            // Contactors & Relays Logic
+            const contactors = nodes.filter(n => n.type.startsWith('KM_') || n.type.startsWith('RELAY_2') || n.type.startsWith('RELAY_4'));
+            contactors.forEach(km => {
+                const wired = wires.some(w => w.fromNode === km.id || w.toNode === km.id);
+                if (!wired) return;
+                if (isStopped) {
+                    km.energized = false;
+                } else if (triggerActive) {
+                    km.energized = true;
+                } else if (!startBtn && !swOn && wires.length >= 2) {
+                    km.energized = true;
+                }
+            });
+
+            // Star-Delta / On-Delay Timer Logic
+            const anyKmEnergized = contactors.some(k => k.energized);
+            nodes.filter(n => n.type === 'TIMER_RELAY').forEach(tm => {
+                if (anyKmEnergized && !isStopped) {
+                    if (tm.timerSec > 0) {
+                        tm.timerSec = Math.max(0, tm.timerSec - 0.25);
+                        tm.timerDone = (tm.timerSec === 0);
+                    }
+                } else {
+                    tm.timerSec = 5.0;
+                    tm.timerDone = false;
+                }
+            });
+
+            // PLC Units Execution
+            nodes.filter(n => n.type.startsWith('PLC_')).forEach(plc => {
+                if (isStopped) plcAutoLatch = false;
+                if (triggerActive) plcAutoLatch = true;
+                if (!startBtn && !swOn && wires.length > 0) plcAutoLatch = true;
+
+                if (plcAutoLatch) {
+                    if (tankLevel < 40) plc.q0 = true;
+                    if (tankLevel >= 90) plc.q0 = false;
+                    plc.q1 = (sewageLevel > 70);
+                } else {
+                    plc.q0 = false;
+                    plc.q1 = false;
+                }
+            });
+
+            // Arduino / ESP32 Execution
+            nodes.filter(n => n.type === 'ARDUINO_UNO' || n.type === 'ARDUINO_MEGA' || n.type === 'ESP32_BOARD').forEach(ard => {
+                if (tankLevel < 40) ard.d7 = true;
+                if (tankLevel >= 85) ard.d7 = false;
+                nodes.filter(n => n.type === 'RELAY_5V').forEach(r => r.energized = ard.d7);
+                nodes.filter(n => n.type === 'SERVO_MOTOR').forEach(s => s.servoOn = ard.d7);
+                nodes.filter(n => n.type === 'LCD_I2C').forEach(l => l.lcdText = `Lvl:${Math.round(tankLevel)}% ${ard.d7 ? 'ON' : 'OFF'}`);
+            });
+
+            const powerActive = anyKmEnergized ||
+                                nodes.some(n => n.type === 'RELAY_5V' && n.energized) ||
+                                nodes.some(n => n.type.startsWith('PLC_') && n.q0);
+
+            const timerNode = nodes.find(n => n.type === 'TIMER_RELAY');
+
+            // Update Motors, VFDs, Soft Starters & Pumps
+            nodes.filter(n => n.type === 'MOTOR_SD' || n.type === 'MOTOR_PTC' || n.type === 'MOTOR_DC24' || n.type === 'VFD_400V' || n.type === 'SOFT_STARTER').forEach(m => {
+                const wired = wires.some(w => w.fromNode === m.id || w.toNode === m.id);
+                m.running = wired && powerActive;
+                if (m.type === 'MOTOR_SD') {
+                    if (!m.running) m.sdMode = 'M Y/Δ';
+                    else m.sdMode = (timerNode && timerNode.timerDone) ? 'DELTA Δ' : 'STAR Y';
+                }
+            });
+
+            nodes.filter(n => n.type === 'PUMP_1P').forEach(p => {
+                const wired = wires.some(w => w.fromNode === p.id || w.toNode === p.id);
+                p.running = wired && powerActive;
+                if (p.running) tankLevel = Math.min(100, tankLevel + 1.5);
+            });
+
+            if (outletOpen && tankLevel > 5) {
+                tankLevel = Math.max(5, tankLevel - 0.6);
+            }
+            activeSewagePumps = powerActive ? Math.min(4, Math.ceil(sewageLevel / 25)) : 0;
+
+            // Update Lamps, Buzzers, LEDs & Meters
+            nodes.filter(n => n.type === 'LAMP_GREEN' || n.type === 'BUZZER' || n.type === 'LED_220').forEach(l => {
+                const wired = wires.some(w => w.fromNode === l.id || w.toNode === l.id);
+                l.energized = wired && powerActive;
+            });
+            nodes.filter(n => n.type === 'LAMP_RED').forEach(l => {
+                const wired = wires.some(w => w.fromNode === l.id || w.toNode === l.id);
+                l.energized = wired && !powerActive;
+            });
+
+            const anyMotorOn = nodes.some(n => n.running);
+            nodes.filter(n => n.type === 'MULTIMETER').forEach(mm => {
+                mm.reading = anyMotorOn ? (timerNode && !timerNode.timerDone ? '11.40 A' : '20.12 A') : '0.00 A';
+            });
+            nodes.filter(n => n.type === 'AMMETER').forEach(am => {
+                am.ampVal = anyMotorOn ? '20.1 A' : '0.0 A';
+            });
+
+            wires.forEach(w => {
+                w.live = powerActive || w.color === '#ef4444';
+            });
+
+            renderAllNodes();
+            if (activeDock === 'process') renderProcessTank();
+            if (activeDock === 'plc') renderPlcLadder();
+        }
+        /* =========================================================
+           4. BOTTOM DOCKS (WATER TANK & SEWAGE STATION, PLC LADDER, ARDUINO IDE)
+           ========================================================= */
+        let activeDock = null;
+
+        function openDock(tab) {
+            activeDock = tab;
+            document.getElementById('bottomDock').classList.add('open');
+            document.querySelectorAll('.dock-trigger').forEach(b => b.classList.remove('active'));
+            const trig = document.getElementById('trig-' + tab);
+            if (trig) trig.classList.add('active');
+
+            if (tab === 'ai') renderAiBuilderDock();
+            if (tab === 'process') renderProcessTank();
+            if (tab === 'plc') renderPlcLadder();
+            if (tab === 'arduino') renderArduinoIde();
+        }
+
+        function closeDock() {
+            activeDock = null;
+            document.getElementById('bottomDock').classList.remove('open');
+            document.querySelectorAll('.dock-trigger').forEach(b => b.classList.remove('active'));
+        }
+
+        function renderProcessTank() {
+            document.getElementById('dockTitle').textContent = '💧 محاكاة العمليات الحية — خزان المياه ومحطة ضخ الصرف (1 - 4 مضخات)';
+            const pumpOn = nodes.some(n => n.type === 'PUMP_1P' && n.running);
+            const lvl = Math.round(tankLevel);
+            const sLvl = Math.round(sewageLevel);
+
+            document.getElementById('dockBody').innerHTML = `
+                <div style="display:flex;gap:16px;align-items:stretch;flex-wrap:wrap;">
+                    <!-- Water Tank Process -->
+                    <div style="flex:1;min-width:260px;background:#0b0d10;border:1px solid #242b36;border-radius:10px;padding:10px;display:flex;gap:12px;align-items:center;">
+                        <svg width="175" height="170" viewBox="0 0 240 190">
+                            <rect x="70" y="28" width="100" height="135" fill="#111827" stroke="#64748b" stroke-width="2"/>
+                            <rect x="72" y="${161 - (lvl * 1.3)}" width="96" height="${lvl * 1.3}" fill="#0284c7" opacity="0.88"/>
+                            <text x="120" y="95" fill="#fff" font-size="16" font-weight="bold" text-anchor="middle">${lvl} %</text>
+                            <path d="M 32 145 L 32 18 L 110 18 L 110 32" fill="none" stroke="${pumpOn ? '#38bdf8' : '#475569'}" stroke-width="6"/>
+                            ${pumpOn ? '<line x1="110" y1="32" x2="110" y2="155" stroke="#38bdf8" stroke-width="4" stroke-dasharray="6 4"/>' : ''}
+                            <circle cx="32" cy="152" r="15" fill="${pumpOn ? '#10b981' : '#334155'}" stroke="#fff" stroke-width="1.5"/>
+                            <text x="32" y="156" fill="#fff" font-size="9" font-weight="bold" text-anchor="middle">P1</text>
+                            <line x1="170" y1="150" x2="225" y2="150" stroke="${outletOpen ? '#38bdf8' : '#475569'}" stroke-width="6"/>
+                            <circle cx="198" cy="150" r="9" fill="${outletOpen ? '#10b981' : '#ef4444'}"/>
+                            <text x="198" y="174" fill="#9ca3af" font-size="9" text-anchor="middle">V1 ${outletOpen ? 'OPEN' : 'CLOSED'}</text>
+                            <circle cx="160" cy="45" r="4" fill="${lvl >= 85 ? '#22c55e' : '#334155'}"/>
+                            <text x="180" y="48" fill="#9ca3af" font-size="8">LSHH1</text>
+                            <circle cx="160" cy="135" r="4" fill="${lvl <= 35 ? '#22c55e' : '#334155'}"/>
+                            <text x="180" y="138" fill="#9ca3af" font-size="8">LSLL1</text>
+                        </svg>
+                        <div style="font-size:0.78rem;line-height:1.6;">
+                            <div style="font-weight:800;color:#38bdf8;margin-bottom:4px;">خزان المياه (Water Tank)</div>
+                            <div>المضخة P1: <strong style="color:${pumpOn ? '#10b981' : '#ef4444'};">${pumpOn ? 'تعمل' : 'متوقفة'}</strong></div>
+                            <div>مرسل LT1: <strong>${(4 + (lvl / 100) * 16).toFixed(2)} mA</strong></div>
+                            <button class="t-btn" style="margin-top:8px;" onclick="outletOpen=!outletOpen;renderProcessTank();">🚰 صمام V1 (${outletOpen ? 'مفتوح' : 'مغلق'})</button>
+                        </div>
+                    </div>
+
+                    <!-- Sewage Pumping Station (1 - 4 Pumps) -->
+                    <div style="flex:1;min-width:260px;background:#0b0d10;border:1px solid #242b36;border-radius:10px;padding:10px;display:flex;flex-direction:column;justify-content:space-between;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-weight:800;color:#f59e0b;font-size:0.8rem;">محطة ضخ مياه الصرف (1 - 4 مضخات)</span>
+                            <span style="font-size:0.76rem;color:#38bdf8;">المنسوب: ${sLvl}%</span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0;">
+                            ${[1, 2, 3, 4].map(idx => {
+                                const on = activeSewagePumps >= idx;
+                                return `<div style="background:#161b24;border:1px solid ${on ? '#10b981' : '#334155'};border-radius:8px;padding:8px;text-align:center;">
+                                    <div style="font-weight:800;font-size:0.78rem;color:${on ? '#10b981' : '#94a3b8'};">P${idx}</div>
+                                    <div style="font-size:0.68rem;margin-top:2px;">${on ? 'RUN' : 'STBY'}</div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:0.74rem;color:#9ca3af;">محاكاة ارتفاع المنسوب:</span>
+                            <input type="range" min="10" max="100" value="${sLvl}" style="flex:1;" oninput="sewageLevel=parseInt(this.value,10);if(isRunning)evaluateCircuitStep();renderProcessTank();">
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function addCustomLadderRung() {
+            const inTag = prompt('أدخل عنوان المدخل (مثال: I0.2 Sensor أو M0.1):', 'I0.2 Sensor');
+            if (!inTag) return;
+            const outTag = prompt('أدخل عنوان المخرج أو المؤقت (مثال: Q0.2 Alarm أو T2 TON):', 'Q0.2 Alarm');
+            if (!outTag) return;
+            customLadderRungs.push({ title: 'User Custom Network', input: inTag, output: outTag });
+            renderPlcLadder();
+        }
+
+        function renderPlcLadder() {
+            document.getElementById('dockTitle').textContent = '📟 محرر ومراقب PLC Ladder التفاعلي (Online Monitoring)';
+            const q0Live = nodes.some(n => n.type.startsWith('PLC_') && n.q0);
+            const q1Live = nodes.some(n => n.type.startsWith('PLC_') && n.q1);
+            const lvl = Math.round(tankLevel);
+            const rawIw64 = Math.round((lvl / 100) * 27648);
+
+            const extraRungsHtml = customLadderRungs.map((r, i) => `
+                <div class="ladder-rung ${plcAutoLatch ? 'rung-live' : ''}">
+                    <div class="rung-title">Network ${4 + i}: ${escapeHtml(r.title)}</div>
+                    <div class="rung-wire">|---[ ${escapeHtml(r.input)} ]------------------------------------( ${escapeHtml(r.output)} )---|</div>
+                </div>
+            `).join('');
+
+            document.getElementById('dockBody').innerHTML = `
+                <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+                    <span style="font-size:0.76rem;color:#9ca3af;">المسارات الخضراء تمثل سريان الإشارة المنطقية في الزمن الحقيقي:</span>
+                    <button class="t-btn" onclick="addCustomLadderRung()">➕ إضافة سطر Ladder</button>
+                </div>
+                <div class="ladder-rung rung-live">
+                    <div class="rung-title">Network 1: Analog Level Scaling (0 - 27648 → 0 - 100%)</div>
+                    <div class="rung-wire">|---[ SCALE  IN: IW64 (${rawIw64})  →  OUT: MW10 (${lvl}%) ]---|</div>
+                </div>
+                <div class="ladder-rung ${plcAutoLatch ? 'rung-live' : ''}">
+                    <div class="rung-title">Network 2: Automatic Latch (Start I0.0 / Stop I0.1)</div>
+                    <div class="rung-wire">|---[ I0.0 Start ]---+---[ /I0.1 Stop ]-----------------( M0.0 Auto )---|<br>|---[ M0.0 Auto  ]---+</div>
+                </div>
+                <div class="ladder-rung ${q0Live ? 'rung-live' : ''}">
+                    <div class="rung-title">Network 3: Tank Pump Q0.0 & Sewage Backup Q0.1</div>
+                    <div class="rung-wire">|---[ M0.0 Auto ]---[ MW10 (${lvl}%) &lt; 90 ]---------------( Q0.0 Pump P1 )---|<br>|---[ M0.0 Auto ]---[ Sewage (${Math.round(sewageLevel)}%) &gt; 70 ]-----------( Q0.1 Sewage )---|</div>
+                </div>
+                ${extraRungsHtml}
+            `;
+        }
+
+        function renderArduinoIde() {
+            document.getElementById('dockTitle').textContent = '🤖 بيئة برمجة الأردوينو المتكاملة (Arduino C++ Sketch + Serial Monitor)';
+            const lvl = Math.round(tankLevel);
+            const relayOn = nodes.some(n => n.type === 'RELAY_5V' && n.energized);
+            document.getElementById('dockBody').innerHTML = `
+                <div style="display:flex;gap:12px;flex-wrap:wrap;height:100%;">
+                    <div style="flex:2;min-width:260px;display:flex;flex-direction:column;">
+                        <textarea id="arduinoEditor" rows="7" style="flex:1;width:100%;background:#0b0d10;color:#38bdf8;border:1px solid #242b36;border-radius:8px;padding:10px;font-family:monospace;direction:ltr;text-align:left;font-size:0.79rem;">${arduinoCode}</textarea>
+                        <div style="margin-top:6px;display:flex;gap:8px;">
+                            <button class="t-btn run-active" onclick="arduinoCode=document.getElementById('arduinoEditor').value;toggleSimulation();">⚡ رفع الكود وتشغيل المحاكاة (Verify & Upload)</button>
+                        </div>
+                    </div>
+                    <div style="flex:1;min-width:200px;background:#0b0d10;border:1px solid #242b36;border-radius:8px;padding:10px;font-family:monospace;direction:ltr;text-align:left;font-size:0.76rem;color:#10b981;">
+                        <div style="color:#9ca3af;border-bottom:1px solid #1e293b;padding-bottom:4px;margin-bottom:6px;">Serial Monitor (9600 baud)</div>
+                        <div>> Board: Arduino Uno / Mega</div>
+                        <div>> Analog A0 Level: ${lvl}%</div>
+                        <div>> Pin D7 (Relay): ${relayOn ? 'HIGH (1)' : 'LOW (0)'}</div>
+                        <div>> Pin D9 (Servo): ${relayOn ? '90 deg (OPEN)' : '0 deg (CLOSED)'}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* =========================================================
+           5. AI AUTO-BUILDER (Generates Full Circuits, Wiring, Guide & Code)
+           ========================================================= */
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        function renderAiBuilderDock() {
+            document.getElementById('dockTitle').textContent = '✨ المهندس الذكي لبناء الدوائر والبرمجة تلقائياً (AI Circuit Auto-Builder)';
+            document.getElementById('dockBody').innerHTML = `
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+                    <button class="t-btn" onclick="buildPresetCircuit('dol')">⚙️ تشغيل مباشر DOL + مالتيميتر</button>
+                    <button class="t-btn" onclick="buildPresetCircuit('star_delta')">⭐ دائرة نجمة / دلتا (Star-Delta + Timer)</button>
+                    <button class="t-btn" onclick="buildPresetCircuit('plc_tank')">💧 منظومة خزان مياه أوتوماتيكية بالـ PLC</button>
+                    <button class="t-btn" onclick="buildPresetCircuit('arduino_pump')">🤖 مشروع أردوينو + ريليه 5V + سيرفو + LCD</button>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="aiCircuitPrompt" placeholder="اشرح فكرة البورد أو المشروع (مثال: دائرة ستار دلتا لمحرك 3 فاز، أو مشروع أردوينو مع سيرفو وريليه، أو نظام PLC لخزان مياه)..." style="flex:1;background:#0b0d10;border:1px solid #2e3746;color:#fff;padding:9px 12px;border-radius:8px;">
+                    <button class="t-btn ai-magic" onclick="handleAiBuildPrompt()">🚀 ابنِ الدائرة واشرحها</button>
+                </div>
+                <div id="aiGuideOutput" style="margin-top:10px;background:#0b0d10;border:1px solid #242b36;border-radius:8px;padding:10px;line-height:1.7;display:none;"></div>
+            `;
+        }
+
+        function handleAiBuildPrompt() {
+            const q = document.getElementById('aiCircuitPrompt').value.trim().toLowerCase();
+            if (!q) {
+                alert('اكتب وصف المشروع أو اختر أحد الأمثلة الجاهزة أعلاه.');
+                return;
+            }
+            if (q.includes('أردوينو') || q.includes('ردوينو') || q.includes('arduino') || q.includes('سيرفو')) {
+                buildPresetCircuit('arduino_pump');
+            } else if (q.includes('plc') || q.includes('بلسي') || q.includes('خزان') || q.includes('مضخ') || q.includes('صرف')) {
+                buildPresetCircuit('plc_tank');
+            } else if (q.includes('ستار') || q.includes('دلتا') || q.includes('star') || q.includes('delta') || q.includes('نجمة')) {
+                buildPresetCircuit('star_delta');
+            } else {
+                buildPresetCircuit('dol');
+            }
+        }
+
+        function buildPresetCircuit(presetKey) {
+            stopSimulation();
+            nodes = [];
+            wires = [];
+            nodeSeq = 0;
+
+            const guideBox = document.getElementById('aiGuideOutput');
+            let guideHtml = '';
+
+            if (presetKey === 'dol') {
+                const sup = spawnComponent('SUPPLY_3P', 70, 55, '3P+N');
+                const mcb = spawnComponent('MCB_3P', 70, 170, 'Q1-MCB');
+                const km = spawnComponent('KM_3P_38A', 70, 295, 'KM1-MAIN');
+                const mot = spawnComponent('MOTOR_SD', 80, 425, 'M1-3~');
+                const stopB = spawnComponent('BTN_STOP', 245, 180, 'S0-STOP');
+                const startB = spawnComponent('BTN_START', 245, 305, 'S1-START');
+                const lamp = spawnComponent('LAMP_GREEN', 385, 305, 'H1-RUN');
+                const mm = spawnComponent('MULTIMETER', 245, 425, 'CLAMP-A');
+
+                connectPorts(sup.id, 'L1', mcb.id, '1', '#ef4444');
+                connectPorts(sup.id, 'L2', mcb.id, '3', '#eab308');
+                connectPorts(sup.id, 'L3', mcb.id, '5', '#3b82f6');
+                connectPorts(sup.id, 'N', mcb.id, 'N1', '#38bdf8');
+
+                connectPorts(mcb.id, '2', km.id, 'L1', '#ef4444');
+                connectPorts(mcb.id, '4', km.id, 'L2', '#eab308');
+                connectPorts(mcb.id, '6', km.id, 'L3', '#3b82f6');
+
+                connectPorts(km.id, 'T1', mot.id, 'U1', '#ef4444');
+                connectPorts(km.id, 'T2', mot.id, 'V1', '#eab308');
+                connectPorts(km.id, 'T3', mot.id, 'W1', '#3b82f6');
+
+                connectPorts(mcb.id, '2', stopB.id, '1', '#ef4444');
+                connectPorts(stopB.id, '2', startB.id, '3', '#ef4444');
+                connectPorts(startB.id, '4', km.id, 'A1', '#ef4444');
+                connectPorts(mcb.id, 'N2', km.id, 'A2', '#38bdf8');
+                connectPorts(km.id, 'A1', lamp.id, 'X1', '#10b981');
+                connectPorts(mcb.id, 'N2', lamp.id, 'X2', '#38bdf8');
+                connectPorts(km.id, 'T3', mm.id, 'V+', '#f59e0b');
+
+                guideHtml = `
+                    <strong style="color:#10b981;">✅ تم بناء دائرة التشغيل المباشر (DOL) مع المالتيميتر:</strong>
+                    <ol style="padding-right:18px;margin-top:4px;">
+                        <li><strong>دائرة القدرة:</strong> تغذية الفازات الثلاثة من المصدر عبر القاطع <code>Q1-MCB</code> والكونتاكتور <code>KM1-MAIN</code> إلى المحرك.</li>
+                        <li><strong>دائرة التحكم:</strong> خط الفاز يمر عبر ضاغط الإيقاف <code>S0-STOP</code> ثم <code>S1-START</code> لتغذية ملف الكونتاكتور <code>A1</code>.</li>
+                        <li><strong>التشغيل الحي:</strong> اضغط على الزر الأخضر <strong>S1-START</strong> لمشاهدة دوران المحرك وإضاءة لمبة التشغيل وقراءة الأمبير <code>20.12 A</code>.</li>
+                    </ol>
+                `;
+            } else if (presetKey === 'star_delta') {
+                const sup = spawnComponent('SUPPLY_3P', 65, 55, '3P+N');
+                const mcb = spawnComponent('MCB_3P', 65, 165, 'Q1-MCB');
+                const kmMain = spawnComponent('KM_3P_38A', 65, 285, 'KM1-MAIN');
+                const kmDelta = spawnComponent('KM_3P_38A', 210, 285, 'KM3-DELTA');
+                const kmStar = spawnComponent('KM_3P_12A', 355, 285, 'KM2-STAR');
+                const timer = spawnComponent('TIMER_RELAY', 365, 165, 'KT1-5s');
+                const startB = spawnComponent('BTN_START', 225, 165, 'S1-START');
+                const mot = spawnComponent('MOTOR_SD', 140, 415, 'M1 Y/Δ');
+                const mm = spawnComponent('MULTIMETER', 355, 415, 'CLAMP-A');
+
+                connectPorts(sup.id, 'L1', mcb.id, '1', '#ef4444');
+                connectPorts(sup.id, 'L2', mcb.id, '3', '#eab308');
+                connectPorts(sup.id, 'L3', mcb.id, '5', '#3b82f6');
+                connectPorts(sup.id, 'N', mcb.id, 'N1', '#38bdf8');
+
+                connectPorts(mcb.id, '2', kmMain.id, 'L1', '#ef4444');
+                connectPorts(mcb.id, '4', kmMain.id, 'L2', '#eab308');
+                connectPorts(mcb.id, '6', kmMain.id, 'L3', '#3b82f6');
+
+                connectPorts(kmMain.id, 'T1', mot.id, 'U1', '#ef4444');
+                connectPorts(kmMain.id, 'T2', mot.id, 'V1', '#eab308');
+                connectPorts(kmMain.id, 'T3', mot.id, 'W1', '#3b82f6');
+
+                connectPorts(kmDelta.id, 'T1', mot.id, 'W2', '#ef4444');
+                connectPorts(kmDelta.id, 'T2', mot.id, 'U2', '#eab308');
+                connectPorts(kmDelta.id, 'T3', mot.id, 'V2', '#3b82f6');
+
+                connectPorts(kmStar.id, 'T1', mot.id, 'W2', '#10b981');
+                connectPorts(kmStar.id, 'T2', mot.id, 'U2', '#10b981');
+                connectPorts(kmStar.id, 'T3', mot.id, 'V2', '#10b981');
+
+                connectPorts(mcb.id, '2', startB.id, '3', '#ef4444');
+                connectPorts(startB.id, '4', kmMain.id, 'A1', '#ef4444');
+                connectPorts(startB.id, '4', timer.id, 'A1', '#f59e0b');
+                connectPorts(timer.id, '16', kmStar.id, 'A1', '#10b981');
+                connectPorts(timer.id, '28', kmDelta.id, 'A1', '#3b82f6');
+
+                connectPorts(mcb.id, 'N2', kmMain.id, 'A2', '#38bdf8');
+                connectPorts(mcb.id, 'N2', kmDelta.id, 'A2', '#38bdf8');
+                connectPorts(mcb.id, 'N2', kmStar.id, 'A2', '#38bdf8');
+                connectPorts(mcb.id, 'N2', timer.id, 'A2', '#38bdf8');
+                connectPorts(kmMain.id, 'T3', mm.id, 'V+', '#f59e0b');
+
+                guideHtml = `
+                    <strong style="color:#f59e0b;">⭐ تم بناء دائرة إقلاع نجمة / دلتا (Star-Delta) مع التايمر الزمني:</strong>
+                    <ol style="padding-right:18px;margin-top:4px;">
+                        <li><strong>مرحلة البدء (Star Y):</strong> عند الضغط على <code>S1-START</code> يعمل الكونتاكتور الرئيسي <code>KM1</code> وكونتاكتور النجمة <code>KM2</code> بتيار إقلاع منخفض (<code>11.40 A</code>).</li>
+                        <li><strong>التحويل التلقائي (Delta Δ):</strong> بعد انقضاء زمن التايمر <code>KT1 (5.0s)</code> يفصل <code>KM2-STAR</code> ويعمل <code>KM3-DELTA</code> بكامل القدرة (<code>20.12 A</code>).</li>
+                    </ol>
+                `;
+            } else if (presetKey === 'plc_tank') {
+                const plc = spawnComponent('PLC_14IO', 120, 75, 'PLC-14IO');
+                const lt = spawnComponent('TX_LEVEL_420', 310, 75, 'LT1-420mA');
+                const startB = spawnComponent('BTN_START', 60, 225, 'I0.0-START');
+                const stopB = spawnComponent('BTN_STOP', 190, 225, 'I0.1-STOP');
+                const pump = spawnComponent('PUMP_1P', 310, 230, 'P1-PUMP');
+
+                connectPorts(startB.id, '4', plc.id, 'I0.0', '#10b981');
+                connectPorts(stopB.id, '2', plc.id, 'I0.1', '#ef4444');
+                connectPorts(lt.id, 'OUT', plc.id, 'IW64', '#06b6d4');
+                connectPorts(plc.id, 'Q0.0', pump.id, 'L', '#f59e0b');
+                connectPorts(plc.id, '0V', pump.id, 'N', '#38bdf8');
+
+                guideHtml = `
+                    <strong style="color:#38bdf8;">💧 تم بناء منظومة التحكم بالخزان ومحطة الصرف عبر PLC 14 I/O:</strong>
+                    <ol style="padding-right:18px;margin-top:4px;">
+                        <li><strong>المدخلات:</strong> ربط ضاغط البدء بـ <code>I0.0</code>، ضاغط الإيقاف بـ <code>I0.1</code>، ومرسل المستوى التناظري (4-20mA) بـ <code>IW64</code>.</li>
+                        <li><strong>المراقبة الحية:</strong> افتح تبويب <em>خزان المياه ومحطة الصرف</em> أو <em>محرر PLC Ladder</em> من الأسفل لمشاهدة التعبئة التلقائية وسريان إشارات السلم!</li>
+                    </ol>
+                `;
+            } else if (presetKey === 'arduino_pump') {
+                const ard = spawnComponent('ARDUINO_UNO', 90, 80, 'ARD-UNO');
+                const pot = spawnComponent('POT_CTRL', 275, 80, 'LEVEL-SIM');
+                const lcd = spawnComponent('LCD_I2C', 435, 80, 'LCD-16x2');
+                const rel = spawnComponent('RELAY_5V', 90, 235, 'RLY-5V');
+                const servo = spawnComponent('SERVO_MOTOR', 265, 235, 'VALVE-SRV');
+                const pump = spawnComponent('PUMP_1P', 435, 235, 'PUMP-P1');
+
+                connectPorts(ard.id, '5V', rel.id, 'VCC', '#ef4444');
+                connectPorts(ard.id, 'GND', rel.id, 'GND', '#38bdf8');
+                connectPorts(ard.id, 'D7', rel.id, 'IN', '#eab308');
+                connectPorts(pot.id, 'W', ard.id, 'A0', '#06b6d4');
+                connectPorts(ard.id, 'D9', servo.id, 'PWM', '#a855f7');
+                connectPorts(ard.id, '5V', lcd.id, 'VCC', '#ef4444');
+                connectPorts(rel.id, 'NO', pump.id, 'L', '#10b981');
+
+                guideHtml = `
+                    <strong style="color:#a855f7;">🤖 تم بناء مشروع الأردوينو المتكامل (Relay 5V + Servo + LCD I2C):</strong>
+                    <ol style="padding-right:18px;margin-top:4px;">
+                        <li><strong>التوصيل الآمن:</strong> مخرج <code>D7</code> يغذي وحدة الريليه <code>RLY-5V</code> لتشغيل المضخة بعزل كامل، ومخرج <code>D9</code> يحرك السيرفو لفتح/إغلاق الصمام.</li>
+                        <li><strong>المحاكاة التفاعلية:</strong> حرّك شريط المقاومة المتغيرة <code>LEVEL-SIM</code> لمحاكاة تغير مستوى الخزان ومشاهدة استجابة الشاشة والسيرفو والريليه فوراً!</li>
+                    </ol>
+                `;
+            }
+
+            if (guideBox) {
+                guideBox.innerHTML = guideHtml;
+                guideBox.style.display = 'block';
+            }
+            toggleSimulation();
+        }
+
+        function clearWorkspace() {
+            stopSimulation();
+            nodes = [];
+            wires = [];
+            nodeSeq = 0;
+            renderAllNodes();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            buildPalette();
+            openDock('ai');
+        });
+    </script>
+</body>
+</html>
